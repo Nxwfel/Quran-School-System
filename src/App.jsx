@@ -3,6 +3,8 @@ import LandingPage from './Pages/LandingPage.jsx'
 import About from './Pages/About.jsx'
 import Schedule from './Pages/Schedule.jsx'
 import Contact from './Pages/Contact.jsx'
+import TeacherPage from './Pages/TeacherPage.jsx'
+import ParentPage from './Pages/ParentPage.jsx'
 function App() {
   
 
@@ -14,6 +16,8 @@ function App() {
       <About />
       <Schedule />
       <Contact />
+      <TeacherPage />
+      <ParentPage />
     </div>
   )
 }
