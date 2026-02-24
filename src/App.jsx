@@ -16,8 +16,6 @@ function App() {
       <About />
       <Schedule />
       <Contact />
-      <TeacherPage />
-      <ParentPage />
     </div>
   )
 }

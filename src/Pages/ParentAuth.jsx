@@ -1,8 +1,10 @@
+"use client"
+
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 
-const TeacherAuthPage = () => {
+const ParentAuth = () => {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({ phone_number: '', password: '' })
   const [loading, setLoading] = useState(false)
@@ -32,18 +34,20 @@ const TeacherAuthPage = () => {
         throw new Error(data?.detail || 'فشل تسجيل الدخول. تحقق من بياناتك.')
       }
 
+      // The API should return a token and user info.
+      // We store user with role='parent' so ParentProtectedRoute passes.
       const token = data.access_token || data.token || data
       const user = {
-        role: 'teacher',
+        role: 'parent',
         token: typeof token === 'string' ? token : JSON.stringify(token),
         phone_number: formData.phone_number,
-        ...(data.user || {}),
+        ...( data.user || {} ),
       }
 
       localStorage.setItem('user', JSON.stringify(user))
       localStorage.setItem('token', user.token)
 
-      navigate('/teacher')
+      navigate('/parent')
     } catch (err) {
       setError(err.message || 'حدث خطأ ما، حاول مجدداً')
     } finally {
@@ -56,14 +60,14 @@ const TeacherAuthPage = () => {
       className='min-h-screen w-screen bg-black flex items-center justify-center overflow-hidden relative'
       dir='rtl'
     >
-      {/* Ambient background — blue/purple to match TeacherPage theme */}
+      {/* Ambient background glow */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-        <div className='absolute -top-40 -right-40 w-[500px] h-[500px] bg-blue-700/10 rounded-full blur-[120px]' />
-        <div className='absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-purple-700/10 rounded-full blur-[120px]' />
+        <div className='absolute -top-40 -right-40 w-[500px] h-[500px] bg-purple-700/10 rounded-full blur-[120px]' />
+        <div className='absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-pink-700/10 rounded-full blur-[120px]' />
         <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-indigo-700/5 rounded-full blur-[80px]' />
       </div>
 
-      {/* Dot grid */}
+      {/* Subtle dot grid */}
       <div
         className='absolute inset-0 pointer-events-none opacity-20'
         style={{
@@ -88,14 +92,14 @@ const TeacherAuthPage = () => {
             transition={{ delay: 0.2 }}
             className='text-center mb-10'
           >
-            <div className='w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-blue-500/20 flex items-center justify-center text-4xl shadow-lg'>
-              👨‍🏫
+            <div className='w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-purple-500/20 flex items-center justify-center text-4xl shadow-lg'>
+              👨‍👩‍👧‍👦
             </div>
             <h1 className='Styled text-3xl md:text-4xl text-white mb-2'>
-              بوابة الأستاذ
+              بوابة ولي الأمر
             </h1>
             <p className='Normal text-white/50 text-base'>
-              سجّل الدخول لإدارة طلابك ومتابعة تقدمهم
+              سجّل الدخول لمتابعة أداء أبنائك
             </p>
           </motion.div>
 
@@ -119,7 +123,7 @@ const TeacherAuthPage = () => {
                   placeholder='05xxxxxxxx'
                   required
                   dir='ltr'
-                  className='w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 Normal text-base text-right placeholder:text-white/25 focus:border-blue-500/50 focus:outline-none focus:bg-white/8 transition-all'
+                  className='w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 Normal text-base text-right placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none focus:bg-white/8 transition-all'
                 />
                 <span className='absolute right-4 top-1/2 -translate-y-1/2 text-white/30 text-lg'>📱</span>
               </div>
@@ -142,7 +146,7 @@ const TeacherAuthPage = () => {
                   onChange={handleChange}
                   placeholder='••••••••'
                   required
-                  className='w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 Normal text-base placeholder:text-white/25 focus:border-blue-500/50 focus:outline-none focus:bg-white/8 transition-all pr-12'
+                  className='w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 Normal text-base placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none focus:bg-white/8 transition-all pr-12'
                 />
                 <button
                   type='button'
@@ -155,7 +159,7 @@ const TeacherAuthPage = () => {
               </div>
             </motion.div>
 
-            {/* Error */}
+            {/* Error Message */}
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -180,7 +184,7 @@ const TeacherAuthPage = () => {
                 disabled={loading}
                 whileHover={!loading ? { scale: 1.02 } : {}}
                 whileTap={!loading ? { scale: 0.98 } : {}}
-                className='w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-blue-800 disabled:to-purple-800 disabled:opacity-50 text-white rounded-xl py-4 Styled text-xl transition-all shadow-lg shadow-blue-900/30 mt-2'
+                className='w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-purple-800 disabled:to-pink-800 disabled:opacity-50 text-white rounded-xl py-4 Styled text-xl transition-all shadow-lg shadow-purple-900/30 mt-2'
               >
                 {loading ? (
                   <span className='flex items-center justify-center gap-3'>
@@ -216,11 +220,11 @@ const TeacherAuthPage = () => {
 
         {/* Bottom label */}
         <p className='Normal text-center text-white/20 text-xs mt-6'>
-          مدرسة القرآن الكريم · بوابة الأساتذة
+          مدرسة القرآن الكريم · بوابة أولياء الأمور
         </p>
       </motion.div>
     </div>
   )
 }
 
-export default TeacherAuthPage
+export default ParentAuth

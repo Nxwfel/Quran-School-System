@@ -1,590 +1,844 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 
-const TeacherPage = () => {
-  const [activeTab, setActiveTab] = useState('dashboard')
-  const [students, setStudents] = useState([])
-  const [selectedStudent, setSelectedStudent] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0])
-  const [todayAttendance, setTodayAttendance] = useState({})
-  const [stats, setStats] = useState({
-    totalStudents: 0,
-    presentToday: 0,
-    avgProgress: 0,
-    recentActivities: []
+const API = 'https://quranicshooldkjudsadup9ewidu79poadwjaiok.onrender.com'
+
+// ─── API Hook ──────────────────────────────────────────────────────────────
+const useApi = () => {
+  // Read token — handle both plain string and JSON-encoded string
+  const token = () => {
+    let t = localStorage.getItem('token')
+    if (!t) {
+      // Fallback: read from user object
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}')
+        t = user.token || ''
+      } catch { t = '' }
+    }
+    // Strip surrounding quotes if double-encoded: '"eyJ..."' → 'eyJ...'
+    if (t && t.startsWith('"') && t.endsWith('"')) {
+      try { t = JSON.parse(t) } catch { /* keep as-is */ }
+    }
+    return t
+  }
+
+  const headers = () => ({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token()}`,
   })
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05
+  const request = async (method, path, body, params) => {
+    const url = params ? `${API}${path}?${new URLSearchParams(params)}` : `${API}${path}`
+    const res = await fetch(url, {
+      method,
+      headers: headers(),
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    if (res.status === 401) {
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
+      window.location.href = '/teacherlogin'
+      return
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || 'حدث خطأ في الطلب')
+    }
+    return res.json()
+  }
+
+  return {
+    get: (path, params) => request('GET', path, null, params),
+    post: (path, body) => request('POST', path, body),
+  }
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────
+const Toast = ({ message, type, onClose }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: 20, scale: 0.95 }}
+    className='fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-3 rounded-2xl text-sm'
+    style={{
+      background: type === 'error' ? 'rgba(20,5,5,0.97)' : 'rgba(5,15,10,0.97)',
+      border: `1px solid ${type === 'error' ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`,
+      color: type === 'error' ? '#fca5a5' : '#86efac',
+      backdropFilter: 'blur(20px)',
+      boxShadow: `0 8px 32px ${type === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}`,
+    }}
+  >
+    <span className='text-base'>{type === 'error' ? '✕' : '✓'}</span>
+    <span className='Normal'>{message}</span>
+  </motion.div>
+)
+
+// ─── Stat Card ─────────────────────────────────────────────────────────────
+const StatCard = ({ icon, value, label, color, delay }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 24 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay, type: 'spring', stiffness: 80 }}
+    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    className='rounded-2xl p-6 flex flex-col gap-3'
+    style={{
+      background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.07)',
+    }}
+  >
+    <div className='text-3xl'>{icon}</div>
+    <div className='Styled text-4xl' style={{ color }}>{value}</div>
+    <div className='Normal text-sm' style={{ color: 'rgba(255,255,255,0.45)' }}>{label}</div>
+  </motion.div>
+)
+
+// ─── Empty State ───────────────────────────────────────────────────────────
+const Empty = ({ label }) => (
+  <div className='py-16 flex flex-col items-center gap-3'>
+    <div className='text-4xl opacity-20'>◌</div>
+    <p className='Normal text-sm' style={{ color: 'rgba(255,255,255,0.25)' }}>{label}</p>
+  </div>
+)
+
+// ─── Spinner ───────────────────────────────────────────────────────────────
+const Spin = ({ color = 'rgba(99,102,241,0.8)' }) => (
+  <motion.span
+    animate={{ rotate: 360 }}
+    transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+    className='inline-block w-4 h-4 rounded-full border-2 border-transparent'
+    style={{ borderTopColor: color }}
+  />
+)
+
+// ─── Score Badge ───────────────────────────────────────────────────────────
+const ScoreBadge = ({ score }) => {
+  const color = score >= 85 ? '#86efac' : score >= 60 ? '#fde68a' : '#fca5a5'
+  const bg = score >= 85 ? 'rgba(34,197,94,0.1)' : score >= 60 ? 'rgba(234,179,8,0.1)' : 'rgba(239,68,68,0.1)'
+  const border = score >= 85 ? 'rgba(34,197,94,0.3)' : score >= 60 ? 'rgba(234,179,8,0.3)' : 'rgba(239,68,68,0.3)'
+  return (
+    <span
+      className='Normal text-xs px-2.5 py-1 rounded-full'
+      style={{ background: bg, border: `1px solid ${border}`, color }}
+    >
+      {score}
+    </span>
+  )
+}
+
+// ─── Input ────────────────────────────────────────────────────────────────
+const Input = ({ label, value, onChange, type = 'text', placeholder = '', required = false }) => (
+  <div className='flex flex-col gap-1.5'>
+    {label && (
+      <label className='Normal text-xs text-right' style={{ color: 'rgba(255,255,255,0.35)' }}>
+        {label}{required && <span style={{ color: '#818cf8' }}> *</span>}
+      </label>
+    )}
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      className='w-full rounded-xl px-4 py-2.5 text-right Normal outline-none text-sm transition-all duration-200'
+      style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.07)', color: 'white' }}
+      onFocus={e => { e.target.style.borderColor = 'rgba(99,102,241,0.5)'; e.target.style.background = 'rgba(99,102,241,0.04)' }}
+      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.07)'; e.target.style.background = 'rgba(0,0,0,0.3)' }}
+    />
+  </div>
+)
+
+const SelectField = ({ label, value, onChange, options, placeholder = 'اختر...' }) => (
+  <div className='flex flex-col gap-1.5'>
+    {label && (
+      <label className='Normal text-xs text-right' style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</label>
+    )}
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className='w-full rounded-xl px-4 py-2.5 text-right Normal outline-none text-sm appearance-none cursor-pointer'
+      style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.07)', color: value ? 'white' : 'rgba(255,255,255,0.3)' }}
+      onFocus={e => e.target.style.borderColor = 'rgba(99,102,241,0.5)'}
+      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.07)'}
+    >
+      <option value='' style={{ background: '#0a0a0f', color: 'rgba(255,255,255,0.3)' }}>{placeholder}</option>
+      {options.map(o => (
+        <option key={o.value} value={o.value} style={{ background: '#0a0a0f', color: 'white' }}>{o.label}</option>
+      ))}
+    </select>
+  </div>
+)
+
+const Textarea = ({ label, value, onChange, placeholder = '', rows = 4 }) => (
+  <div className='flex flex-col gap-1.5'>
+    {label && (
+      <label className='Normal text-xs text-right' style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</label>
+    )}
+    <textarea
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      className='w-full rounded-xl px-4 py-3 text-right Normal outline-none text-sm resize-none transition-all duration-200'
+      style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.07)', color: 'white' }}
+      onFocus={e => { e.target.style.borderColor = 'rgba(99,102,241,0.5)'; e.target.style.background = 'rgba(99,102,241,0.04)' }}
+      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.07)'; e.target.style.background = 'rgba(0,0,0,0.3)' }}
+    />
+  </div>
+)
+
+// ─── Section wrapper ───────────────────────────────────────────────────────
+const Section = ({ children }) => (
+  <div
+    className='rounded-2xl p-6 md:p-8'
+    style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
+  >
+    {children}
+  </div>
+)
+
+const SectionTitle = ({ icon, children }) => (
+  <div className='flex items-center gap-3 mb-6'>
+    <span className='text-lg'>{icon}</span>
+    <h3 className='Styled text-xl text-white'>{children}</h3>
+    <div className='flex-1 h-px' style={{ background: 'linear-gradient(to left, transparent, rgba(255,255,255,0.06))' }} />
+  </div>
+)
+
+// ─── TABS ──────────────────────────────────────────────────────────────────
+
+// Dashboard
+const DashboardTab = ({ students, api, toast }) => {
+  const present = students.filter(s => s._lastAttendance === true).length
+  const absent = students.filter(s => s._lastAttendance === false).length
+
+  return (
+    <motion.div
+      key='dashboard'
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.25 }}
+      className='flex flex-col gap-6'
+    >
+      {/* Stats */}
+      <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+        <StatCard icon='👥' value={students.length} label='إجمالي الطلاب' color='#818cf8' delay={0} />
+        <StatCard icon='✓' value={present} label='حاضر اليوم' color='#86efac' delay={0.07} />
+        <StatCard icon='✗' value={absent} label='غائب اليوم' color='#fca5a5' delay={0.14} />
+      </div>
+
+      {/* Students overview */}
+      <Section>
+        <SectionTitle icon='👥'>نظرة على الطلاب</SectionTitle>
+        {students.length === 0 ? (
+          <Empty label='لا يوجد طلاب مسجلون' />
+        ) : (
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+            {students.map((s, i) => (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className='flex items-center gap-4 p-4 rounded-xl'
+                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)' }}
+              >
+                <div
+                  className='w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0'
+                  style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(147,51,234,0.3))' }}
+                >
+                  👤
+                </div>
+                <div className='flex-1 min-w-0'>
+                  <p className='Styled text-sm text-white truncate'>{s.name}</p>
+                  <p className='Normal text-xs mt-0.5' style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    طالب #{s.id}
+                  </p>
+                </div>
+                {s._lastAttendance !== undefined && (
+                  <span
+                    className='Normal text-xs px-2.5 py-1 rounded-full flex-shrink-0'
+                    style={{
+                      background: s._lastAttendance ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                      border: `1px solid ${s._lastAttendance ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                      color: s._lastAttendance ? '#86efac' : '#fca5a5',
+                    }}
+                  >
+                    {s._lastAttendance ? 'حاضر' : 'غائب'}
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </Section>
+    </motion.div>
+  )
+}
+
+// Students Tab
+const StudentsTab = ({ students, loading, searchQuery, setSearchQuery }) => {
+  const filtered = students.filter(s =>
+    s.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  return (
+    <motion.div
+      key='students'
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.25 }}
+      className='flex flex-col gap-5'
+    >
+      {/* Search */}
+      <div className='relative max-w-md mx-auto w-full'>
+        <input
+          type='text'
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder='ابحث عن طالب...'
+          className='w-full rounded-2xl px-5 py-3.5 pr-12 Normal text-sm outline-none transition-all text-white'
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          onFocus={e => e.target.style.borderColor = 'rgba(99,102,241,0.4)'}
+          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+        />
+        <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={2} stroke='currentColor'
+          className='w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2'
+          style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <path strokeLinecap='round' strokeLinejoin='round' d='m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z' />
+        </svg>
+      </div>
+
+      {loading ? (
+        <div className='flex justify-center py-20'><Spin /></div>
+      ) : filtered.length === 0 ? (
+        <Empty label={searchQuery ? 'لا توجد نتائج' : 'لا يوجد طلاب مسجلون'} />
+      ) : (
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+          {filtered.map((student, i) => (
+            <motion.div
+              key={student.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className='rounded-2xl p-5 flex flex-col gap-4'
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <div className='flex items-center justify-between'>
+                <div
+                  className='w-12 h-12 rounded-xl flex items-center justify-center text-2xl'
+                  style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(147,51,234,0.25))' }}
+                >
+                  👤
+                </div>
+                <span
+                  className='Normal text-xs px-2 py-1 rounded-full'
+                  style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', color: '#a5b4fc' }}
+                >
+                  #{student.id}
+                </span>
+              </div>
+              <div>
+                <h3 className='Styled text-lg text-white'>{student.name}</h3>
+                <p className='Normal text-xs mt-1' style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  المشرف: {student.supervisor_id || '—'}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
+// Attendance Tab
+const AttendanceTab = ({ students, api, toast }) => {
+  const [attendance, setAttendance] = useState({})
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState({})
+
+  const toggle = (id, value) => {
+    setAttendance(prev => ({ ...prev, [id]: value }))
+  }
+
+  const saveAll = async () => {
+    const entries = Object.entries(attendance)
+    if (entries.length === 0) {
+      toast('لم تقم بتحديد حضور أي طالب', 'error')
+      return
+    }
+    setSaving(true)
+    let successCount = 0
+    let failCount = 0
+    for (const [studentId, present] of entries) {
+      try {
+        await api.post('/attendances/', { student_id: Number(studentId), present })
+        setSaved(prev => ({ ...prev, [studentId]: true }))
+        successCount++
+      } catch {
+        failCount++
       }
     }
+    setSaving(false)
+    if (failCount === 0) toast(`تم حفظ حضور ${successCount} طالب بنجاح ✓`)
+    else toast(`تم حفظ ${successCount}، فشل ${failCount}`, failCount > 0 ? 'error' : 'success')
   }
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: 'spring',
-        stiffness: 100
-      }
+  const markedCount = Object.keys(attendance).length
+  const presentCount = Object.values(attendance).filter(Boolean).length
+  const absentCount = Object.values(attendance).filter(v => v === false).length
+
+  return (
+    <motion.div
+      key='attendance'
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.25 }}
+      className='flex flex-col gap-5'
+    >
+      <Section>
+        <div className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6'>
+          <div>
+            <h2 className='Styled text-2xl text-white'>تسجيل الحضور</h2>
+            <p className='Normal text-xs mt-1' style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {markedCount} من {students.length} · حاضر: {presentCount} · غائب: {absentCount}
+            </p>
+          </div>
+          <input
+            type='date'
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className='Normal text-sm rounded-xl px-4 py-2.5 outline-none'
+            style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.07)', color: 'white' }}
+          />
+        </div>
+
+        {students.length === 0 ? (
+          <Empty label='لا يوجد طلاب' />
+        ) : (
+          <div className='flex flex-col gap-3'>
+            {students.map((student, i) => {
+              const status = attendance[student.id]
+              const isSaved = saved[student.id]
+              return (
+                <motion.div
+                  key={student.id}
+                  initial={{ opacity: 0, x: -16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl'
+                  style={{
+                    background: isSaved ? 'rgba(34,197,94,0.04)' : 'rgba(0,0,0,0.2)',
+                    border: `1px solid ${isSaved ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.05)'}`,
+                  }}
+                >
+                  <div className='flex items-center gap-3'>
+                    <div
+                      className='w-10 h-10 rounded-full flex items-center justify-center text-base flex-shrink-0'
+                      style={{ background: 'rgba(99,102,241,0.15)' }}
+                    >
+                      👤
+                    </div>
+                    <div>
+                      <p className='Styled text-sm text-white'>{student.name}</p>
+                      <p className='Normal text-xs' style={{ color: 'rgba(255,255,255,0.3)' }}>#{student.id}</p>
+                    </div>
+                    {isSaved && (
+                      <span className='Normal text-xs' style={{ color: '#86efac' }}>✓ محفوظ</span>
+                    )}
+                  </div>
+
+                  <div className='flex gap-2 w-full sm:w-auto'>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => toggle(student.id, true)}
+                      className='flex-1 sm:flex-none px-5 py-2 rounded-xl Normal text-sm transition-all'
+                      style={{
+                        background: status === true ? 'rgba(34,197,94,0.2)' : 'rgba(34,197,94,0.06)',
+                        border: `1px solid ${status === true ? 'rgba(34,197,94,0.5)' : 'rgba(34,197,94,0.15)'}`,
+                        color: status === true ? '#86efac' : 'rgba(134,239,172,0.5)',
+                      }}
+                    >
+                      حاضر ✓
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => toggle(student.id, false)}
+                      className='flex-1 sm:flex-none px-5 py-2 rounded-xl Normal text-sm transition-all'
+                      style={{
+                        background: status === false ? 'rgba(239,68,68,0.2)' : 'rgba(239,68,68,0.06)',
+                        border: `1px solid ${status === false ? 'rgba(239,68,68,0.5)' : 'rgba(239,68,68,0.15)'}`,
+                        color: status === false ? '#fca5a5' : 'rgba(252,165,165,0.5)',
+                      }}
+                    >
+                      غائب ✗
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+
+        {students.length > 0 && (
+          <motion.button
+            whileHover={!saving ? { scale: 1.01 } : {}}
+            whileTap={!saving ? { scale: 0.99 } : {}}
+            onClick={saveAll}
+            disabled={saving}
+            className='w-full mt-6 py-3.5 rounded-xl Styled text-base flex items-center justify-center gap-2'
+            style={{
+              background: saving ? 'rgba(99,102,241,0.08)' : 'linear-gradient(135deg, rgba(59,130,246,0.6), rgba(99,102,241,0.6))',
+              border: '1px solid rgba(99,102,241,0.3)',
+              color: saving ? 'rgba(255,255,255,0.3)' : 'white',
+              cursor: saving ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {saving ? <><Spin /> جاري الحفظ...</> : 'حفظ الحضور'}
+          </motion.button>
+        )}
+      </Section>
+    </motion.div>
+  )
+}
+
+// Progress Tab
+const ProgressTab = ({ students, api, toast }) => {
+  const [form, setForm] = useState({
+    student_id: '',
+    hizb: '',
+    thomn: '',
+    surah: '',
+    from_ayah: '',
+    to_ayah: '',
+    type: 'حفظ',
+    score: '',
+    notes: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [history, setHistory] = useState([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+
+  const loadHistory = useCallback(async (id) => {
+    if (!id) return
+    setLoadingHistory(true)
+    try {
+      const data = await api.get('/progresses/', { student_id: id })
+      setHistory(Array.isArray(data) ? data : [])
+    } catch {
+      setHistory([])
     }
+    setLoadingHistory(false)
+  }, [])
+
+  const handleStudentChange = (id) => {
+    setForm(f => ({ ...f, student_id: id }))
+    loadHistory(id)
   }
 
-  const cardHover = {
-    scale: 1.03,
-    y: -5,
-    transition: { type: 'spring', stiffness: 300 }
-  }
-
-  const tabVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        type: 'spring',
-        stiffness: 100
-      }
-    },
-    exit: {
-      opacity: 0,
-      x: 20,
-      transition: {
-        duration: 0.2
-      }
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const required = ['student_id', 'hizb', 'thomn', 'surah', 'from_ayah', 'to_ayah', 'score', 'notes']
+    if (required.some(k => !form[k])) {
+      toast('يرجى ملء جميع الحقول المطلوبة', 'error')
+      return
     }
+    setSaving(true)
+    try {
+      await api.post('/progresses/', {
+        ...form,
+        student_id: Number(form.student_id),
+        score: Number(form.score),
+      })
+      toast('تم تسجيل التقدم بنجاح ✓')
+      setForm(f => ({ ...f, hizb: '', thomn: '', surah: '', from_ayah: '', to_ayah: '', score: '', notes: '' }))
+      loadHistory(form.student_id)
+    } catch (err) {
+      toast(err.message, 'error')
+    }
+    setSaving(false)
   }
 
-  // Fetch students from API
+  const typeIcons = { حفظ: '📚', مراجعة: '🔄', تلاوة: '📖' }
+
+  return (
+    <motion.div
+      key='progress'
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.25 }}
+      className='flex flex-col gap-5'
+    >
+      <Section>
+        <SectionTitle icon='📖'>تسجيل تقدم جديد</SectionTitle>
+        <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
+          <SelectField
+            label='الطالب *'
+            value={form.student_id}
+            onChange={handleStudentChange}
+            options={students.map(s => ({ value: s.id, label: s.name }))}
+            placeholder='اختر طالباً'
+          />
+
+          <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
+            <Input label='الحزب *' value={form.hizb} onChange={v => setForm(f => ({ ...f, hizb: v }))} placeholder='مثال: ١٢' />
+            <Input label='الثمن *' value={form.thomn} onChange={v => setForm(f => ({ ...f, thomn: v }))} placeholder='الأول' />
+            <Input label='السورة *' value={form.surah} onChange={v => setForm(f => ({ ...f, surah: v }))} placeholder='البقرة' />
+          </div>
+
+          <div className='grid grid-cols-2 gap-3'>
+            <Input label='من الآية *' type='number' value={form.from_ayah} onChange={v => setForm(f => ({ ...f, from_ayah: v }))} placeholder='١' />
+            <Input label='إلى الآية *' type='number' value={form.to_ayah} onChange={v => setForm(f => ({ ...f, to_ayah: v }))} placeholder='١٠' />
+          </div>
+
+          <div className='grid grid-cols-2 gap-3'>
+            <SelectField
+              label='النوع'
+              value={form.type}
+              onChange={v => setForm(f => ({ ...f, type: v }))}
+              options={[
+                { value: 'حفظ', label: '📚 حفظ' },
+                { value: 'مراجعة', label: '🔄 مراجعة' },
+                { value: 'تلاوة', label: '📖 تلاوة' },
+              ]}
+            />
+            <Input label='الدرجة (0–100) *' type='number' value={form.score} onChange={v => setForm(f => ({ ...f, score: v }))} placeholder='٩٥' />
+          </div>
+
+          <Textarea
+            label='ملاحظات المعلم *'
+            value={form.notes}
+            onChange={v => setForm(f => ({ ...f, notes: v }))}
+            placeholder='أداء الطالب، نقاط القوة والضعف...'
+            rows={3}
+          />
+
+          <motion.button
+            type='submit'
+            disabled={saving}
+            whileHover={!saving ? { scale: 1.01 } : {}}
+            whileTap={!saving ? { scale: 0.99 } : {}}
+            className='w-full py-3.5 rounded-xl Styled text-base flex items-center justify-center gap-2 mt-1'
+            style={{
+              background: saving ? 'rgba(99,102,241,0.08)' : 'linear-gradient(135deg, rgba(59,130,246,0.6), rgba(99,102,241,0.6))',
+              border: '1px solid rgba(99,102,241,0.3)',
+              color: saving ? 'rgba(255,255,255,0.3)' : 'white',
+              cursor: saving ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {saving ? <><Spin /> جاري الحفظ...</> : 'حفظ التقدم'}
+          </motion.button>
+        </form>
+      </Section>
+
+      {/* History */}
+      {form.student_id && (
+        <Section>
+          <SectionTitle icon='📊'>
+            سجل {students.find(s => String(s.id) === String(form.student_id))?.name || ''}
+          </SectionTitle>
+          {loadingHistory ? (
+            <div className='flex justify-center py-10'><Spin /></div>
+          ) : history.length === 0 ? (
+            <Empty label='لا توجد سجلات تقدم لهذا الطالب بعد' />
+          ) : (
+            <div className='flex flex-col gap-3'>
+              {history.map((p, i) => (
+                <motion.div
+                  key={p.id || i}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className='flex items-start gap-4 p-4 rounded-xl'
+                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)' }}
+                >
+                  <span className='text-xl mt-0.5 flex-shrink-0'>{typeIcons[p.type] || '📝'}</span>
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex items-center justify-between gap-2 mb-1'>
+                      <span className='Styled text-sm text-white'>{p.surah}</span>
+                      <ScoreBadge score={p.score} />
+                    </div>
+                    <p className='Normal text-xs' style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      آيات {p.from_ayah}–{p.to_ayah} · {p.type} · حزب {p.hizb}
+                    </p>
+                    {p.notes && (
+                      <p className='Normal text-xs mt-1.5 leading-relaxed' style={{ color: 'rgba(255,255,255,0.55)' }}>
+                        {p.notes}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+    </motion.div>
+  )
+}
+
+// ─── TABS CONFIG ───────────────────────────────────────────────────────────
+const TABS = [
+  { id: 'dashboard', label: 'لوحة التحكم', icon: '◈' },
+  { id: 'students',  label: 'الطلاب',      icon: '👥' },
+  { id: 'attendance',label: 'الحضور',      icon: '📅' },
+  { id: 'progress',  label: 'التقدم',      icon: '📈' },
+]
+
+// ─── MAIN PAGE ─────────────────────────────────────────────────────────────
+const TeacherPage = () => {
+  const navigate = useNavigate()
+  const api = useApi()
+
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [students, setStudents] = useState([])
+  const [loadingStudents, setLoadingStudents] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [toastState, setToastState] = useState(null)
+
+  const showToast = (message, type = 'success') => {
+    setToastState({ message, type })
+    setTimeout(() => setToastState(null), 3500)
+  }
+
+  const fetchStudents = useCallback(async () => {
+    setLoadingStudents(true)
+    try {
+      const data = await api.get('/students/')
+      setStudents(Array.isArray(data) ? data : [])
+    } catch (err) {
+      showToast(err.message || 'فشل تحميل الطلاب', 'error')
+    }
+    setLoadingStudents(false)
+  }, [])
+
   useEffect(() => {
     fetchStudents()
   }, [])
 
-  const fetchStudents = async () => {
-    setLoading(true)
-    try {
-      // Mock data with more details
-      const mockStudents = [
-        { id: 1, name: 'أحمد محمد الصالح', teacher_id: 1, supervisor_id: 1, progress: 85, lastAttendance: 'حاضر', hizb: 12, surah: 'البقرة' },
-        { id: 2, name: 'فاطمة علي السعيد', teacher_id: 1, supervisor_id: 1, progress: 92, lastAttendance: 'حاضر', hizb: 15, surah: 'آل عمران' },
-        { id: 3, name: 'يوسف حسن العمري', teacher_id: 1, supervisor_id: 2, progress: 78, lastAttendance: 'غائب', hizb: 8, surah: 'النساء' },
-        { id: 4, name: 'مريم خالد الأحمد', teacher_id: 1, supervisor_id: 2, progress: 95, lastAttendance: 'حاضر', hizb: 18, surah: 'المائدة' },
-        { id: 5, name: 'عمر سعيد الحارثي', teacher_id: 1, supervisor_id: 1, progress: 70, lastAttendance: 'حاضر', hizb: 6, surah: 'الأنعام' },
-      ]
-      setStudents(mockStudents)
-      
-      // Calculate stats
-      setStats({
-        totalStudents: mockStudents.length,
-        presentToday: mockStudents.filter(s => s.lastAttendance === 'حاضر').length,
-        avgProgress: Math.round(mockStudents.reduce((acc, s) => acc + s.progress, 0) / mockStudents.length),
-        recentActivities: [
-          { student: 'فاطمة علي', action: 'أكملت حفظ سورة آل عمران', time: 'منذ ساعتين' },
-          { student: 'أحمد محمد', action: 'حضور اليوم', time: 'منذ 3 ساعات' },
-          { student: 'مريم خالد', action: 'حصلت على 98% في المراجعة', time: 'منذ 5 ساعات' }
-        ]
-      })
-    } catch (error) {
-      console.error('Error fetching students:', error)
-    } finally {
-      setLoading(false)
-    }
+  const logout = () => {
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    navigate('/teacherlogin')
   }
 
-  const handleAttendanceToggle = (studentId) => {
-    setTodayAttendance(prev => ({
-      ...prev,
-      [studentId]: prev[studentId] === 'present' ? 'absent' : prev[studentId] === 'absent' ? undefined : 'present'
-    }))
-  }
-
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  const getAttendanceColor = (studentId) => {
-    const status = todayAttendance[studentId]
-    if (status === 'present') return 'bg-green-600 border-green-400'
-    if (status === 'absent') return 'bg-red-600 border-red-400'
-    return 'bg-white/10 border-white/20'
-  }
+  const tabProps = { students, api, toast: showToast, loading: loadingStudents, searchQuery, setSearchQuery }
 
   return (
-    <div className='min-h-screen w-screen bg-black text-white overflow-x-hidden'>
-      {/* Enhanced Header with Gradient */}
-      <div className='relative overflow-hidden'>
-        <div className='absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-purple-600/10' />
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, type: 'spring' }}
-          className='relative p-6 md:p-10 text-center'
-        >
-          <h1 className='Styled text-5xl md:text-6xl lg:text-7xl text-white mb-3'>
-            فضاء الأستاذ
-          </h1>
-          <p className='Normal text-white/70 text-lg md:text-xl'>
-            إدارة متكاملة للطلاب والحضور والتقدم الدراسي
-          </p>
-        </motion.div>
+    <div
+      className='min-h-screen w-screen text-white overflow-x-hidden'
+      style={{ background: '#0a0a0f' }}
+      dir='rtl'
+    >
+      {/* Background */}
+      <div className='fixed inset-0 pointer-events-none'>
+        <div style={{
+          position: 'absolute', top: '-20%', right: '-10%',
+          width: '600px', height: '600px', borderRadius: '9999px',
+          background: 'rgba(59,130,246,0.04)', filter: 'blur(100px)',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-20%', left: '-10%',
+          width: '600px', height: '600px', borderRadius: '9999px',
+          background: 'rgba(147,51,234,0.04)', filter: 'blur(100px)',
+        }} />
+        <div
+          className='absolute inset-0 opacity-[0.15]'
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
       </div>
 
-      {/* Enhanced Tab Navigation */}
+      {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, type: 'spring' }}
-        className='sticky top-0 z-30 bg-black/90 backdrop-blur-lg border-b border-white/10 px-4 md:px-8 py-4'
+        transition={{ duration: 0.5 }}
+        className='relative px-6 md:px-12 pt-8 pb-6 flex items-start justify-between gap-4'
       >
-        <div className='flex flex-wrap justify-center gap-2 md:gap-3 max-w-4xl mx-auto'>
-          {[
-            { id: 'dashboard', label: 'لوحة التحكم', icon: '📊' },
-            { id: 'students', label: 'الطلاب', icon: '👥' },
-            { id: 'attendance', label: 'الحضور', icon: '✓' },
-            { id: 'progress', label: 'التقدم', icon: '📈' }
-          ].map((tab) => (
-            <motion.button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`px-4 md:px-6 py-2 md:py-3 rounded-xl Styled text-base md:text-lg transition-all flex items-center gap-2 ${
-                activeTab === tab.id
-                  ? 'bg-white text-black shadow-xl'
-                  : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
-              }`}
-            >
-              <span className='text-xl'>{tab.icon}</span>
-              <span className='hidden sm:inline'>{tab.label}</span>
-            </motion.button>
-          ))}
+        <div>
+          <h1 className='Styled text-4xl md:text-5xl text-white leading-tight'>فضاء الأستاذ</h1>
+          <p className='Normal text-sm mt-2' style={{ color: 'rgba(255,255,255,0.35)' }}>
+            {loadingStudents ? 'جاري التحميل...' : `${students.length} طالب مسجل`}
+          </p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={logout}
+          className='Normal text-xs px-4 py-2 rounded-xl flex items-center gap-2 mt-1'
+          style={{
+            background: 'rgba(239,68,68,0.06)',
+            border: '1px solid rgba(239,68,68,0.15)',
+            color: 'rgba(252,165,165,0.6)',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#fca5a5' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; e.currentTarget.style.color = 'rgba(252,165,165,0.6)' }}
+        >
+          <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-3.5 h-3.5'>
+            <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9' />
+          </svg>
+          خروج
+        </motion.button>
+      </motion.div>
+
+      {/* Tab Bar */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15 }}
+        className='sticky top-0 z-30 px-6 md:px-12 py-3'
+        style={{
+          background: 'rgba(10,10,15,0.85)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+        }}
+      >
+        <div className='flex gap-1.5 max-w-lg'>
+          {TABS.map(tab => {
+            const isActive = activeTab === tab.id
+            return (
+              <motion.button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                whileTap={{ scale: 0.96 }}
+                className='flex items-center gap-2 px-4 py-2 rounded-xl Normal text-sm transition-all'
+                style={{
+                  background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
+                  border: `1px solid ${isActive ? 'rgba(99,102,241,0.3)' : 'transparent'}`,
+                  color: isActive ? '#a5b4fc' : 'rgba(255,255,255,0.35)',
+                }}
+              >
+                <span className='text-base'>{tab.icon}</span>
+                <span className='hidden sm:inline'>{tab.label}</span>
+              </motion.button>
+            )
+          })}
         </div>
       </motion.div>
 
-      {/* Content Area */}
-      <div className='p-4 md:p-8 max-w-7xl mx-auto'>
+      {/* Content */}
+      <div className='relative px-4 md:px-12 py-6 max-w-5xl mx-auto'>
         <AnimatePresence mode='wait'>
-          {/* Dashboard Tab */}
-          {activeTab === 'dashboard' && (
-            <motion.div
-              key='dashboard'
-              variants={tabVariants}
-              initial='hidden'
-              animate='visible'
-              exit='exit'
-            >
-              {/* Stats Cards */}
-              <motion.div
-                variants={containerVariants}
-                initial='hidden'
-                animate='visible'
-                className='grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8'
-              >
-                <motion.div
-                  variants={itemVariants}
-                  whileHover={cardHover}
-                  className='bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/30 rounded-2xl p-6 md:p-8'
-                >
-                  <div className='text-4xl md:text-5xl mb-3'>👥</div>
-                  <h3 className='Styled text-3xl md:text-4xl text-white mb-2'>{stats.totalStudents}</h3>
-                  <p className='Normal text-white/70 text-lg'>إجمالي الطلاب</p>
-                </motion.div>
-
-                <motion.div
-                  variants={itemVariants}
-                  whileHover={cardHover}
-                  className='bg-gradient-to-br from-green-600/20 to-green-800/20 border border-green-500/30 rounded-2xl p-6 md:p-8'
-                >
-                  <div className='text-4xl md:text-5xl mb-3'>✓</div>
-                  <h3 className='Styled text-3xl md:text-4xl text-white mb-2'>{stats.presentToday}</h3>
-                  <p className='Normal text-white/70 text-lg'>حضور اليوم</p>
-                </motion.div>
-
-                <motion.div
-                  variants={itemVariants}
-                  whileHover={cardHover}
-                  className='bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30 rounded-2xl p-6 md:p-8'
-                >
-                  <div className='text-4xl md:text-5xl mb-3'>📈</div>
-                  <h3 className='Styled text-3xl md:text-4xl text-white mb-2'>{stats.avgProgress}%</h3>
-                  <p className='Normal text-white/70 text-lg'>متوسط التقدم</p>
-                </motion.div>
-              </motion.div>
-
-              {/* Recent Activities */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className='bg-[#2E2E2E] rounded-2xl p-6 md:p-8 border border-white/5'
-              >
-                <h2 className='Styled text-2xl md:text-3xl text-white mb-6 flex items-center gap-3'>
-                  <span>🔔</span> النشاطات الأخيرة
-                </h2>
-                <div className='space-y-4'>
-                  {stats.recentActivities.map((activity, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                      className='bg-black/40 rounded-xl p-4 border border-white/5 hover:border-white/20 transition-all'
-                    >
-                      <p className='Normal text-white text-base md:text-lg mb-1'>
-                        <span className='Styled text-blue-400'>{activity.student}</span> - {activity.action}
-                      </p>
-                      <p className='Normal text-white/50 text-sm'>{activity.time}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Students Tab */}
-          {activeTab === 'students' && (
-            <motion.div
-              key='students'
-              variants={tabVariants}
-              initial='hidden'
-              animate='visible'
-              exit='exit'
-            >
-              {/* Search Bar */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className='mb-6 md:mb-8'
-              >
-                <div className='relative max-w-2xl mx-auto'>
-                  <input
-                    type='text'
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder='ابحث عن طالب...'
-                    className='w-full bg-[#2E2E2E] border border-white/10 text-white rounded-2xl px-6 py-4 pr-14 Normal text-lg focus:border-white/30 focus:outline-none transition-all'
-                  />
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-6 absolute right-5 top-1/2 -translate-y-1/2 text-white/40">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                  </svg>
-                </div>
-              </motion.div>
-
-              <motion.div
-                variants={containerVariants}
-                initial='hidden'
-                animate='visible'
-                className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
-              >
-                {loading ? (
-                  <div className='col-span-full text-center Styled text-2xl text-white/60 py-20'>
-                    جاري التحميل...
-                  </div>
-                ) : filteredStudents.length === 0 ? (
-                  <div className='col-span-full text-center Styled text-xl text-white/60 py-20'>
-                    لا توجد نتائج
-                  </div>
-                ) : (
-                  filteredStudents.map((student) => (
-                    <motion.div
-                      key={student.id}
-                      variants={itemVariants}
-                      whileHover={{ scale: 1.03, y: -8 }}
-                      className='bg-[#2E2E2E] rounded-2xl p-6 cursor-pointer border border-white/5 hover:border-white/20 transition-all group'
-                      onClick={() => setSelectedStudent(student)}
-                    >
-                      <div className='flex items-start justify-between mb-4'>
-                        <div className='w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl'>
-                          👤
-                        </div>
-                        <div className={`px-3 py-1 rounded-full text-xs Normal ${
-                          student.lastAttendance === 'حاضر' 
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        }`}>
-                          {student.lastAttendance}
-                        </div>
-                      </div>
-                      
-                      <h3 className='Styled text-xl md:text-2xl text-white mb-3 group-hover:text-blue-400 transition-colors'>
-                        {student.name}
-                      </h3>
-                      
-                      <div className='space-y-2'>
-                        <div className='flex items-center justify-between'>
-                          <span className='Normal text-white/60 text-sm'>التقدم:</span>
-                          <span className='Styled text-white text-base'>{student.progress}%</span>
-                        </div>
-                        <div className='w-full bg-black/40 rounded-full h-2'>
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${student.progress}%` }}
-                            transition={{ delay: 0.5, duration: 1 }}
-                            className='bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full'
-                          />
-                        </div>
-                        <div className='flex items-center justify-between text-sm mt-3'>
-                          <span className='Normal text-white/60'>الحزب {student.hizb}</span>
-                          <span className='Normal text-white/60'>{student.surah}</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Attendance Tab */}
-          {activeTab === 'attendance' && (
-            <motion.div
-              key='attendance'
-              variants={tabVariants}
-              initial='hidden'
-              animate='visible'
-              exit='exit'
-            >
-              <div className='bg-[#2E2E2E] rounded-2xl p-6 md:p-8 border border-white/5'>
-                <div className='flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4'>
-                  <h2 className='Styled text-3xl md:text-4xl text-white'>
-                    تسجيل الحضور
-                  </h2>
-                  <input
-                    type='date'
-                    value={attendanceDate}
-                    onChange={(e) => setAttendanceDate(e.target.value)}
-                    className='bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 Normal text-base focus:border-white/30 focus:outline-none'
-                  />
-                </div>
-
-                <motion.div
-                  variants={containerVariants}
-                  initial='hidden'
-                  animate='visible'
-                  className='space-y-3 md:space-y-4'
-                >
-                  {students.map((student) => (
-                    <motion.div
-                      key={student.id}
-                      variants={itemVariants}
-                      className='flex flex-col md:flex-row items-start md:items-center justify-between bg-black/30 rounded-xl p-4 md:p-5 gap-4 border border-white/5 hover:border-white/10 transition-all'
-                    >
-                      <div className='flex items-center gap-4'>
-                        <div className='w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xl flex-shrink-0'>
-                          👤
-                        </div>
-                        <div>
-                          <span className='Styled text-lg md:text-xl text-white block'>
-                            {student.name}
-                          </span>
-                          <span className='Normal text-white/50 text-sm'>
-                            رقم الطالب: {student.id}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className='flex gap-3 w-full md:w-auto'>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setTodayAttendance(prev => ({ ...prev, [student.id]: 'present' }))
-                          }}
-                          className={`flex-1 md:flex-none px-6 md:px-8 py-3 rounded-xl Normal text-base md:text-lg border-2 transition-all ${
-                            todayAttendance[student.id] === 'present'
-                              ? 'bg-green-600 border-green-400 text-white'
-                              : 'bg-green-600/10 border-green-600/30 text-green-400 hover:bg-green-600/20'
-                          }`}
-                        >
-                          حاضر ✓
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setTodayAttendance(prev => ({ ...prev, [student.id]: 'absent' }))
-                          }}
-                          className={`flex-1 md:flex-none px-6 md:px-8 py-3 rounded-xl Normal text-base md:text-lg border-2 transition-all ${
-                            todayAttendance[student.id] === 'absent'
-                              ? 'bg-red-600 border-red-400 text-white'
-                              : 'bg-red-600/10 border-red-600/30 text-red-400 hover:bg-red-600/20'
-                          }`}
-                        >
-                          غائب ✗
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className='w-full mt-8 bg-white text-black py-4 rounded-xl Styled text-xl hover:bg-white/90 transition-all'
-                >
-                  حفظ الحضور
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Progress Tab */}
-          {activeTab === 'progress' && (
-            <motion.div
-              key='progress'
-              variants={tabVariants}
-              initial='hidden'
-              animate='visible'
-              exit='exit'
-            >
-              <div className='bg-[#2E2E2E] rounded-2xl p-6 md:p-8 border border-white/5'>
-                <h2 className='Styled text-3xl md:text-4xl text-white mb-8 text-center'>
-                  تسجيل التقدم الدراسي
-                </h2>
-                
-                <form className='space-y-6 max-w-3xl mx-auto' onSubmit={(e) => e.preventDefault()}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <label className='Normal text-white/80 block mb-3 text-lg md:text-xl flex items-center gap-2'>
-                      <span>👤</span> اختر الطالب
-                    </label>
-                    <select className='w-full bg-black/40 border border-white/10 text-white rounded-xl p-4 Styled text-lg focus:border-white/30 focus:outline-none'>
-                      <option value=''>-- اختر الطالب --</option>
-                      {students.map((student) => (
-                        <option key={student.id} value={student.id}>
-                          {student.name}
-                        </option>
-                      ))}
-                    </select>
-                  </motion.div>
-
-                  <div className='grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6'>
-                    {[
-                      { label: 'الحزب', placeholder: 'رقم الحزب', icon: '📖' },
-                      { label: 'الثمن', placeholder: 'رقم الثمن', icon: '📝' },
-                      { label: 'السورة', placeholder: 'اسم السورة', icon: '📜' }
-                    ].map((field, index) => (
-                      <motion.div
-                        key={field.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 + index * 0.1 }}
-                      >
-                        <label className='Normal text-white/80 block mb-3 text-base md:text-lg flex items-center gap-2'>
-                          <span>{field.icon}</span> {field.label}
-                        </label>
-                        <input
-                          type='text'
-                          className='w-full bg-black/40 border border-white/10 text-white rounded-xl p-3 md:p-4 Normal text-base md:text-lg focus:border-white/30 focus:outline-none'
-                          placeholder={field.placeholder}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6'>
-                    {[
-                      { label: 'من الآية', icon: '➡️' },
-                      { label: 'إلى الآية', icon: '⬅️' }
-                    ].map((field, index) => (
-                      <motion.div
-                        key={field.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 + index * 0.1 }}
-                      >
-                        <label className='Normal text-white/80 block mb-3 text-base md:text-lg flex items-center gap-2'>
-                          <span>{field.icon}</span> {field.label}
-                        </label>
-                        <input
-                          type='number'
-                          className='w-full bg-black/40 border border-white/10 text-white rounded-xl p-3 md:p-4 Normal text-base md:text-lg focus:border-white/30 focus:outline-none'
-                          placeholder='رقم الآية'
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    <label className='Normal text-white/80 block mb-3 text-lg md:text-xl flex items-center gap-2'>
-                      <span>📋</span> النوع
-                    </label>
-                    <select className='w-full bg-black/40 border border-white/10 text-white rounded-xl p-4 Styled text-lg focus:border-white/30 focus:outline-none'>
-                      <option value=''>-- اختر النوع --</option>
-                      <option value='حفظ'>📚 حفظ جديد</option>
-                      <option value='مراجعة'>🔄 مراجعة</option>
-                      <option value='تلاوة'>📖 تلاوة</option>
-                    </select>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                  >
-                    <label className='Normal text-white/80 block mb-3 text-lg md:text-xl flex items-center gap-2'>
-                      <span>⭐</span> النقطة (من 0 إلى 100)
-                    </label>
-                    <input
-                      type='number'
-                      min='0'
-                      max='100'
-                      className='w-full bg-black/40 border border-white/10 text-white rounded-xl p-4 Normal text-lg focus:border-white/30 focus:outline-none'
-                      placeholder='أدخل النقطة'
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.9 }}
-                  >
-                    <label className='Normal text-white/80 block mb-3 text-lg md:text-xl flex items-center gap-2'>
-                      <span>📝</span> ملاحظات
-                    </label>
-                    <textarea
-                      rows='5'
-                      className='w-full bg-black/40 border border-white/10 text-white rounded-xl p-4 Normal text-base md:text-lg resize-none focus:border-white/30 focus:outline-none'
-                      placeholder='أضف ملاحظاتك حول أداء الطالب...'
-                    ></textarea>
-                  </motion.div>
-
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 1 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type='submit'
-                    className='w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 md:py-5 rounded-xl Styled text-xl md:text-2xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg shadow-blue-600/20'
-                  >
-                    💾 حفظ التقدم
-                  </motion.button>
-                </form>
-              </div>
-            </motion.div>
-          )}
+          {activeTab === 'dashboard' && <DashboardTab key='dashboard' {...tabProps} />}
+          {activeTab === 'students'  && <StudentsTab  key='students'  {...tabProps} />}
+          {activeTab === 'attendance'&& <AttendanceTab key='attendance' {...tabProps} />}
+          {activeTab === 'progress'  && <ProgressTab  key='progress'  {...tabProps} />}
         </AnimatePresence>
       </div>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toastState && <Toast message={toastState.message} type={toastState.type} />}
+      </AnimatePresence>
     </div>
   )
 }
