@@ -9,7 +9,7 @@ const ParentProtectedRoute = ({ children }) => {
     user = null
   }
 
-  if (!user || user.role !== 'parent' || !user.token) {
+  if (!user || user.role !== 'supervisor' || !user.token) {
     return <Navigate to='/parentlogin' replace />
   }
 

@@ -1,14 +1,12 @@
-"use client"
-
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 
 const ParentAuth = () => {
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({ phone_number: '', password: '' })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [formData, setFormData]         = useState({ phone_number: '', password: '' })
+  const [loading, setLoading]           = useState(false)
+  const [error, setError]               = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (e) => {
@@ -18,15 +16,27 @@ const ParentAuth = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (!formData.phone_number.trim() || !formData.password.trim()) {
+      setError('يرجى إدخال رقم الهاتف وكلمة المرور')
+      return
+    }
+
     setLoading(true)
     setError('')
 
     try {
-      const response = await fetch('https://quranicshooldkjudsadup9ewidu79poadwjaiok.onrender.com/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
+      const response = await fetch(
+        'https://quranicshooldkjudsadup9ewidu79poadwjaiok.onrender.com/users/login',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone_number: formData.phone_number.trim(),
+            password: formData.password,
+          }),
+        }
+      )
 
       const data = await response.json()
 
@@ -34,22 +44,28 @@ const ParentAuth = () => {
         throw new Error(data?.detail || 'فشل تسجيل الدخول. تحقق من بياناتك.')
       }
 
-      // The API should return a token and user info.
-      // We store user with role='parent' so ParentProtectedRoute passes.
-      const token = data.access_token || data.token || data
-      const user = {
-        role: 'parent',
-        token: typeof token === 'string' ? token : JSON.stringify(token),
-        phone_number: formData.phone_number,
-        ...( data.user || {} ),
+      // Extract token — must be a real string
+      const rawToken = data.access_token ?? data.token ?? null
+      if (!rawToken || typeof rawToken !== 'string') {
+        throw new Error('لم يتم استلام رمز المصادقة. حاول مجدداً.')
       }
 
-      localStorage.setItem('user', JSON.stringify(user))
-      localStorage.setItem('token', user.token)
+      // Store token cleanly — single source of truth
+      localStorage.setItem('token', rawToken)
+      localStorage.setItem('user', JSON.stringify({
+        role: 'supervisor',   // must match ParentProtectedRoute guard check
+        token: rawToken,
+        phone_number: formData.phone_number.trim(),
+        ...(data.user || {}),
+      }))
 
       navigate('/parent')
     } catch (err) {
-      setError(err.message || 'حدث خطأ ما، حاول مجدداً')
+      if (err instanceof TypeError) {
+        setError('تعذّر الاتصال بالخادم. تحقق من اتصالك بالإنترنت.')
+      } else {
+        setError(err.message || 'حدث خطأ ما، حاول مجدداً')
+      }
     } finally {
       setLoading(false)
     }
@@ -60,14 +76,14 @@ const ParentAuth = () => {
       className='min-h-screen w-screen bg-black flex items-center justify-center overflow-hidden relative'
       dir='rtl'
     >
-      {/* Ambient background glow */}
+      {/* Ambient glows */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
         <div className='absolute -top-40 -right-40 w-[500px] h-[500px] bg-purple-700/10 rounded-full blur-[120px]' />
         <div className='absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-pink-700/10 rounded-full blur-[120px]' />
         <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-indigo-700/5 rounded-full blur-[80px]' />
       </div>
 
-      {/* Subtle dot grid */}
+      {/* Dot grid */}
       <div
         className='absolute inset-0 pointer-events-none opacity-20'
         style={{
@@ -82,7 +98,6 @@ const ParentAuth = () => {
         transition={{ duration: 0.7, type: 'spring', stiffness: 80 }}
         className='relative z-10 w-full max-w-md mx-4'
       >
-        {/* Card */}
         <div className='bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-10 shadow-2xl'>
 
           {/* Icon + Title */}
@@ -105,6 +120,7 @@ const ParentAuth = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className='space-y-5'>
+
             {/* Phone */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -123,9 +139,9 @@ const ParentAuth = () => {
                   placeholder='05xxxxxxxx'
                   required
                   dir='ltr'
-                  className='w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 Normal text-base text-right placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none focus:bg-white/8 transition-all'
+                  className='w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 pl-10 Normal text-base text-right placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none focus:bg-white/[0.08] transition-all'
                 />
-                <span className='absolute right-4 top-1/2 -translate-y-1/2 text-white/30 text-lg'>📱</span>
+                <span className='absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg pointer-events-none'>📱</span>
               </div>
             </motion.div>
 
@@ -146,20 +162,21 @@ const ParentAuth = () => {
                   onChange={handleChange}
                   placeholder='••••••••'
                   required
-                  className='w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 Normal text-base placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none focus:bg-white/8 transition-all pr-12'
+                  className='w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3.5 pr-12 Normal text-base placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none focus:bg-white/[0.08] transition-all'
                 />
                 <button
                   type='button'
                   onClick={() => setShowPassword(!showPassword)}
                   className='absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors text-lg'
                   tabIndex={-1}
+                  aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
                 >
                   {showPassword ? '🙈' : '👁️'}
                 </button>
               </div>
             </motion.div>
 
-            {/* Error Message */}
+            {/* Error */}
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -202,7 +219,7 @@ const ParentAuth = () => {
             </motion.div>
           </form>
 
-          {/* Back link */}
+          {/* Back */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -218,7 +235,6 @@ const ParentAuth = () => {
           </motion.div>
         </div>
 
-        {/* Bottom label */}
         <p className='Normal text-center text-white/20 text-xs mt-6'>
           مدرسة القرآن الكريم · بوابة أولياء الأمور
         </p>
