@@ -94,7 +94,7 @@ const Contact = () => {
           className='Styled text-center mb-3'
           style={{
             fontSize: 'clamp(3rem, 8vw, 6rem)',
-            color: '#f0deb0',
+            color: '#fff',
             textShadow: '0 4px 60px rgba(212,163,79,0.25)',
             lineHeight: 1.1
           }}
@@ -106,8 +106,7 @@ const Contact = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className='Normal text-center text-lg mb-14'
-          style={{ color: 'rgba(212,163,79,0.5)' }}
+          className='Normal text-center text-lg mb-14 text-white/40'
         >
           يسعدنا الرد على استفساراتكم
         </motion.p>
@@ -159,20 +158,19 @@ const Contact = () => {
 
               {/* Text */}
               <div className='flex flex-col flex-1 items-end'>
-                <span className='Normal text-sm mb-1' style={{ color: 'rgba(212,163,79,0.5)' }}>
+                <span className='Normal text-sm mb-1 text-white'>
                   {item.label}
                 </span>
                 <span
-                  className='Styled text-xl md:text-2xl lg:text-3xl'
+                  className='Normal text-white text-xl md:text-2xl lg:text-3xl'
                   style={{
-                    color: hoveredIndex === index ? '#f5e6c8' : '#e8d4a0',
                     transition: 'color 0.3s ease',
                     direction: index === 0 ? 'ltr' : 'rtl'
                   }}
                 >
                   {item.value}
                 </span>
-                <span className='Normal text-xs mt-1' style={{ color: 'rgba(212,163,79,0.38)' }}>
+                <span className='Normal text-xs mt-1 text-white/40'>
                   {item.note}
                 </span>
               </div>

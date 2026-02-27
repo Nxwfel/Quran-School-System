@@ -46,7 +46,7 @@ const About = () => {
   }
 
   return (
-    <div className='min-h-screen w-screen flex flex-col lg:flex-row items-center justify-between bg-black p-4 md:p-8 lg:p-0'> 
+    <div className='min-h-screen py-10 w-screen flex flex-col lg:flex-row items-center justify-between bg-black p-4 md:p-8 lg:p-0'> 
       {/* Teachers Section */}
       <div className='w-full lg:w-[50vw] lg:h-screen p-4 md:p-6 lg:p-10 flex flex-col'>
           <motion.h1 
