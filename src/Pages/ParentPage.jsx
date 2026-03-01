@@ -35,10 +35,10 @@ const useApi = () =>
   }, [])
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-const scoreColor  = s => s >= 90 ? '#4ade80' : s >= 75 ? '#fbbf24' : '#f87171'
-const scoreLabel  = s => s >= 90 ? 'ممتاز' : s >= 75 ? 'جيد' : 'يحتاج تحسين'
-const typeIcon    = t => t === 'حفظ' ? '📚' : t === 'مراجعة' ? '🔄' : '📖'
-const typeColor   = t => t === 'حفظ' ? '#818cf8' : t === 'مراجعة' ? '#34d399' : '#f472b6'
+const scoreColor = s => s >= 90 ? '#4ade80' : s >= 75 ? '#fbbf24' : '#f87171'
+const scoreLabel = s => s >= 90 ? 'ممتاز' : s >= 75 ? 'جيد' : 'يحتاج تحسين'
+const typeIcon = t => t === 'حفظ' ? '📚' : t === 'مراجعة' ? '🔄' : '📖'
+const typeColor = t => t === 'حفظ' ? '#818cf8' : t === 'مراجعة' ? '#34d399' : '#f472b6'
 
 // ─── Toast ──────────────────────────────────────────────────────────────────
 const Toast = ({ message, type }) => (
@@ -74,9 +74,9 @@ const ScoreRing = ({ score, size = 56 }) => {
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
         <motion.circle
-          cx={size/2} cy={size/2} r={r} fill="none"
+          cx={size / 2} cy={size / 2} r={r} fill="none"
           stroke={color} strokeWidth={4}
           strokeLinecap="round"
           strokeDasharray={circ}
@@ -131,9 +131,9 @@ const Spin = () => (
 
 // ─── DASHBOARD TAB ───────────────────────────────────────────────────────────
 const DashboardTab = ({ children, attendanceMap, progressMap }) => {
-  const totalPresent  = Object.values(attendanceMap).flat().filter(a => a.present).length
+  const totalPresent = Object.values(attendanceMap).flat().filter(a => a.present).length
   const totalSessions = Object.values(progressMap).flat().length
-  const allProgress   = Object.entries(progressMap)
+  const allProgress = Object.entries(progressMap)
     .flatMap(([childId, recs]) => recs.slice(0, 2).map(p => ({
       ...p,
       childName: children.find(c => String(c.id) === String(childId))?.name || `#${childId}`,
@@ -148,9 +148,9 @@ const DashboardTab = ({ children, attendanceMap, progressMap }) => {
       style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
     >
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
-        <StatCard icon="👨‍👩‍👧‍👦" value={children.length}  label="عدد الأبناء"   accent="#818cf8" delay={0}    />
-        <StatCard icon="✓"         value={totalPresent}   label="إجمالي الحضور" accent="#4ade80" delay={0.06} />
-        <StatCard icon="📖"        value={totalSessions}  label="جلسات التقدم"  accent="#38bdf8" delay={0.12} />
+        <StatCard icon="👨‍👩‍👧‍👦" value={children.length} label="عدد الأبناء" accent="#818cf8" delay={0} />
+        <StatCard icon="✓" value={totalPresent} label="إجمالي الحضور" accent="#4ade80" delay={0.06} />
+        <StatCard icon="📖" value={totalSessions} label="جلسات التقدم" accent="#38bdf8" delay={0.12} />
       </div>
 
       {/* Children overview */}
@@ -437,7 +437,7 @@ const SearchInput = ({ value, onChange, placeholder }) => (
         transition: 'border-color 0.2s',
       }}
       onFocus={e => e.target.style.borderColor = 'rgba(129,140,248,0.45)'}
-      onBlur={e  => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
     />
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
       strokeWidth={2} stroke="currentColor"
@@ -488,27 +488,27 @@ const ActivityRow = ({ p, delay = 0, showChild = false }) => (
 
 // ─── TABS CONFIG ─────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'dashboard',  label: 'الرئيسية', icon: '◈' },
-  { id: 'children',   label: 'الأبناء',  icon: '👨‍👩‍👧‍👦' },
-  { id: 'attendance', label: 'الحضور',   icon: '📅' },
-  { id: 'progress',   label: 'التقدم',   icon: '📈' },
+  { id: 'dashboard', label: 'الرئيسية', icon: '◈' },
+  { id: 'children', label: 'الأبناء', icon: '👨‍👩‍👧‍👦' },
+  { id: 'attendance', label: 'الحضور', icon: '📅' },
+  { id: 'progress', label: 'التقدم', icon: '📈' },
 ]
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 const ParentPage = () => {
   const navigate = useNavigate()
-  const api      = useApi()
+  const api = useApi()
 
-  const [activeTab,         setActiveTab]        = useState('dashboard')
-  const [children,          setChildren]         = useState([])
-  const [attendanceMap,     setAttendanceMap]     = useState({})
-  const [progressMap,       setProgressMap]       = useState({})
-  const [loadingChildren,   setLoadingChildren]   = useState(true)
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [children, setChildren] = useState([])
+  const [attendanceMap, setAttendanceMap] = useState({})
+  const [progressMap, setProgressMap] = useState({})
+  const [loadingChildren, setLoadingChildren] = useState(true)
   const [loadingAttendance, setLoadingAttendance] = useState(false)
-  const [loadingProgress,   setLoadingProgress]   = useState(false)
-  const [searchQuery,       setSearchQuery]       = useState('')
-  const [selectedChild,     setSelectedChild]     = useState(null)
-  const [toast,             setToast]             = useState(null)
+  const [loadingProgress, setLoadingProgress] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedChild, setSelectedChild] = useState(null)
+  const [toast, setToast] = useState(null)
 
   useEffect(() => {
     if (!toast) return
@@ -669,10 +669,10 @@ const ParentPage = () => {
         {/* Content */}
         <main style={{ position: 'relative', zIndex: 5, padding: '28px 40px 60px', maxWidth: 1100, margin: '0 auto' }}>
           <AnimatePresence mode="wait">
-            {activeTab === 'dashboard'  && <DashboardTab  key="dashboard"  {...tabProps} />}
-            {activeTab === 'children'   && <ChildrenTab   key="children"   {...tabProps} />}
+            {activeTab === 'dashboard' && <DashboardTab key="dashboard"  {...tabProps} />}
+            {activeTab === 'children' && <ChildrenTab key="children"   {...tabProps} />}
             {activeTab === 'attendance' && <AttendanceTab key="attendance" {...tabProps} />}
-            {activeTab === 'progress'   && <ProgressTab   key="progress"   {...tabProps} />}
+            {activeTab === 'progress' && <ProgressTab key="progress"   {...tabProps} />}
           </AnimatePresence>
         </main>
 

@@ -8,13 +8,13 @@ const API = 'https://quranicshooldkjudsadup9ewidu79poadwjaiok.onrender.com';
 const getToken = () => {
   let t = localStorage.getItem('token') || '';
   if (t.startsWith('"') && t.endsWith('"')) {
-    try { t = JSON.parse(t); } catch {}
+    try { t = JSON.parse(t); } catch { }
   }
   if (!t) {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       t = user.token || '';
-    } catch {}
+    } catch { }
   }
   return t;
 };
@@ -47,7 +47,7 @@ const useApi = () => {
 
       if (!res.ok) {
         let err;
-        try { err = await res.json(); } catch {}
+        try { err = await res.json(); } catch { }
         const msg = err?.detail
           ? (Array.isArray(err.detail) ? err.detail.map(d => d.msg).join(', ') : err.detail)
           : `خطأ ${res.status}`;
@@ -140,10 +140,10 @@ const Select = ({ label, value, onChange, options, placeholder }) => (
 
 // ─── Tabs ────────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'dashboard',  label: 'لوحة التحكم', icon: '◈' },
-  { id: 'students',   label: 'الطلاب',      icon: '👥' },
-  { id: 'attendance', label: 'الحضور',      icon: '📅' },
-  { id: 'progress',   label: 'التقدم',      icon: '📈' },
+  { id: 'dashboard', label: 'لوحة التحكم', icon: '◈' },
+  { id: 'students', label: 'الطلاب', icon: '👥' },
+  { id: 'attendance', label: 'الحضور', icon: '📅' },
+  { id: 'progress', label: 'التقدم', icon: '📈' },
 ];
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -233,9 +233,8 @@ const TeacherPage = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 whileTap={{ scale: 0.96 }}
-                className={`px-4 py-2 rounded-xl flex items-center gap-2 text-sm transition-all ${
-                  active ? 'bg-indigo-600/20 border border-indigo-500/40 text-indigo-300' : 'opacity-70 hover:opacity-100'
-                }`}
+                className={`px-4 py-2 rounded-xl flex items-center gap-2 text-sm transition-all ${active ? 'bg-indigo-600/20 border border-indigo-500/40 text-indigo-300' : 'opacity-70 hover:opacity-100'
+                  }`}
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
@@ -392,7 +391,7 @@ const AttendanceTab = ({ students, api, toast, loading }) => {
             </p>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <button onClick={() => markAll(true)}  className="px-5 py-2 bg-green-900/30 border border-green-800/40 rounded-xl hover:bg-green-900/50">الكل حاضر</button>
+            <button onClick={() => markAll(true)} className="px-5 py-2 bg-green-900/30 border border-green-800/40 rounded-xl hover:bg-green-900/50">الكل حاضر</button>
             <button onClick={() => markAll(false)} className="px-5 py-2 bg-red-900/30 border border-red-800/40 rounded-xl hover:bg-red-900/50">الكل غائب</button>
           </div>
         </div>

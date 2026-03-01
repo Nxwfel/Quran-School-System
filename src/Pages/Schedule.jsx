@@ -15,39 +15,9 @@ const Schedule = () => {
       className="relative Styled min-h-screen w-screen overflow-hidden flex items-center justify-center px-6"
       style={{
         background:
-          "radial-gradient(circle at 50% 20%, #1a1208 0%, #0c0804 60%, #050302 100%)",
+          "radial-gradient(circle at 60% 100%, #1a150aff 0%, #0c0804 60%, #050302 100%)",
       }}
     >
-      {/* Cinematic Slow Zoom Background */}
-      <motion.div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `url(${Background})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: 0.15,
-        }}
-      />
-
-      {/* Golden Light Beam */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(198,167,94,0.5) 0%, transparent 70%)",
-          filter: "blur(140px)",
-          opacity: 0.25,
-        }}
-      />
-
-      {/* Grain Overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.05] pointer-events-none"
-        style={{
-          backgroundImage:
-            "url('https://grainy-gradients.vercel.app/noise.svg')",
-        }}
-      />
 
       <div className="relative z-10 max-w-6xl text-white w-full grid lg:grid-cols-2 gap-20 items-center">
         {/* Title Section */}
@@ -80,14 +50,14 @@ const Schedule = () => {
               style={{
                 background:
                   "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(198,167,94,0.05))",
-                border: "1px solid rgba(198,167,94,0.25)",
+                border: "1px solid #c6a75ec0",
                 boxShadow: "0 40px 80px rgba(0,0,0,0.8)",
               }}
             >
               <div className="flex justify-between items-center">
                 <div className="text-right">
                   <div className="text-3xl font-semibold text-white">
-                   {item.day}
+                    {item.day}
                   </div>
                   <div className="text-sm text-white/50 mt-2">
                     {item.subject}

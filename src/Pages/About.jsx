@@ -46,90 +46,82 @@ const About = () => {
   }
 
   return (
-    <div className='min-h-screen py-10 w-screen flex flex-col lg:flex-row items-center justify-between bg-black p-4 md:p-8 lg:p-0'> 
+    <div className='min-h-screen py-10 w-screen flex flex-col lg:flex-row items-center justify-between bg-black p-4 md:p-8 lg:p-0'>
       {/* Teachers Section */}
-      <div className='w-full lg:w-[50vw] lg:h-screen p-4 md:p-6 lg:p-10 flex flex-col'>
-          <motion.h1 
-            className='Styled text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-white mb-6 md:mb-8 lg:mb-0 text-center lg:text-right'
+      <div
+
+        className='w-full lg:w-[50vw] lg:h-screen p-4 md:p-6 lg:p-10 flex flex-col'>
+        <motion.h1
+          className='Styled text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-white mb-6 md:mb-8 lg:mb-0 text-center lg:text-right'
+          initial="hidden"
+          animate="visible"
+          variants={titleVariants}
+        >
+          طاقمنا التدريسي
+        </motion.h1>
+
+        {/* Cards */}
+        <div className='flex w-full lg:w-[40vw] text-center items-start justify-start gap-4 md:gap-6 lg:gap-[1vw] overflow-x-auto overflow-y-hidden pb-4 mt-6 lg:mt-[10vh]'>
+          <motion.div
+            custom={0}
             initial="hidden"
             animate="visible"
-            variants={titleVariants}
+            variants={cardVariants}
+            whileHover={{ scale: 1.05, y: -10 }}
+            transition={{ type: 'spring' }}
+            className='h-[40vh] md:h-[45vh] lg:h-[50vh] bg-[#2E2E2E] text-center min-w-[70vw] md:min-w-[40vw] lg:min-w-[25vw] rounded-2xl shadow-2xl overflow-hidden flex-shrink-0 flex flex-col items-center'
           >
-            طاقمنا التدريسي
-          </motion.h1>
-          
-          {/* Cards */}
-          <div className='flex w-full lg:w-[40vw] text-center items-start justify-start gap-4 md:gap-6 lg:gap-[1vw] overflow-x-auto overflow-y-hidden pb-4 mt-6 lg:mt-[10vh]'>
-            <motion.div 
-              custom={0}
-              initial="hidden"
-              animate="visible"
-              variants={cardVariants}
-              whileHover={{ scale: 1.05, y: -10 }}
-              transition={{ type: 'spring' }}
-              className='h-[40vh] md:h-[45vh] lg:h-[50vh] bg-[#2E2E2E] text-center min-w-[70vw] md:min-w-[40vw] lg:min-w-[25vw] rounded-2xl shadow-2xl overflow-hidden flex-shrink-0 flex flex-col items-center'
-            >
-              <div className='h-[30vh] md:h-[35vh] lg:h-[40vh] w-full hover:blur-xl hover:transition-all bg-white'>
+            <div className='h-[30vh] md:h-[35vh] lg:h-[40vh] w-full hover:blur-xl hover:transition-all bg-white'>
 
-              </div>
-              <h1 className='text-white Styled text-2xl md:text-3xl lg:text-4xl mt-2 md:mt-3 px-2'>
-                الاستاذ خالد الدوسري
-              </h1>
-            </motion.div>
+            </div>
+            <h1 className='text-white Styled text-2xl md:text-3xl lg:text-4xl mt-2 md:mt-3 px-2'>
+              الاستاذ خالد الدوسري
+            </h1>
+          </motion.div>
 
-            <motion.div 
-              custom={1}
-              initial="hidden"
-              animate="visible"
-              variants={cardVariants}
-              whileHover={{ scale: 1.05, y: -10 }}
-              transition={{ type: 'spring' }}
-              className='h-[40vh] md:h-[45vh] lg:h-[50vh] bg-[#2E2E2E] text-center min-w-[70vw] md:min-w-[40vw] lg:min-w-[25vw] rounded-2xl shadow-2xl overflow-hidden flex-shrink-0 flex flex-col items-center'
-            >
-              <div className='h-[30vh] md:h-[35vh] lg:h-[40vh] w-full hover:blur-xl hover:transition-all bg-white'>
+          <motion.div
+            custom={1}
+            initial="hidden"
+            animate="visible"
+            variants={cardVariants}
+            whileHover={{ scale: 1.05, y: -10 }}
+            transition={{ type: 'spring' }}
+            className='h-[40vh] md:h-[45vh] lg:h-[50vh] bg-[#2E2E2E] text-center min-w-[70vw] md:min-w-[40vw] lg:min-w-[25vw] rounded-2xl shadow-2xl overflow-hidden flex-shrink-0 flex flex-col items-center'
+          >
+            <div className='h-[30vh] md:h-[35vh] lg:h-[40vh] w-full hover:blur-xl hover:transition-all bg-white'>
 
-              </div>
-              <h1 className='text-white Styled text-2xl md:text-3xl lg:text-4xl mt-2 md:mt-3 px-2'>
-                الاستاذ خالد الدوسري
-              </h1>
-            </motion.div>
-          </div>
+            </div>
+            <h1 className='text-white Styled text-2xl md:text-3xl lg:text-4xl mt-2 md:mt-3 px-2'>
+              الاستاذ خالد الدوسري
+            </h1>
+          </motion.div>
+        </div>
       </div>
 
       {/* Stats Section */}
       <div className='w-full lg:w-[50vw] lg:h-screen flex flex-col pt-8 md:pt-12 lg:pt-[10vh] gap-8 md:gap-12 lg:gap-[10vh] items-center justify-start lg:justify-start'>
-        <motion.h1 
+        <motion.h1
           custom={0}
           initial="hidden"
           animate="visible"
           variants={statVariants}
-          whileHover={{ scale: 1.1, color: '#60A5FA' }}
+          whileHover={{ scale: 1.1, color: '#c6a75ec0' }}
           transition={{ type: 'spring' }}
           className='Styled text-5xl md:text-6xl lg:text-7xl text-white cursor-pointer text-center'
         >
           +3 مدرسين
         </motion.h1>
 
-        <motion.h1 
-          custom={1}
+        <motion.h1
           initial="hidden"
           animate="visible"
           variants={statVariants}
-          whileHover={{ scale: 1.1, color: '#60A5FA' }}
-          transition={{ type: 'spring' }}
+          whileHover={{ scale: 1.1, color: '#c6a75ec0' }}
+          transition={{ type: 'spring', stiffness: 300 }}
           className='Styled text-5xl md:text-6xl lg:text-7xl text-white cursor-pointer text-center'
         >
           +20 طالب
         </motion.h1>
-
-        <motion.div
-          initial={{ opacity: 0, rotate: 0 }}
-          animate={{ opacity: 1, rotate: 360 }}
-          transition={{ delay: 1.2, duration: 1, type: 'spring' }}
-          className=''
-        >
-
-        </motion.div>
       </div>
     </div>
   )

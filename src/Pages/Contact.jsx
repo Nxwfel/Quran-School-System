@@ -40,6 +40,10 @@ const Contact = () => {
 
   return (
     <div
+      style={{
+        background:
+          "radial-gradient(circle at 50% 20%, #1a150aff 0%, #0c0804 60%, #050302 100%)",
+      }}
       className='min-h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden bg-black'
     >
 
