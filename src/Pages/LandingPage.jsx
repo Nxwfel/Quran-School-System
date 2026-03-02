@@ -1,270 +1,261 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Background from '../assets/Bg.jpg'
 import { Link as Scroll } from 'react-scroll'
 import { Link as Redirect } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
+import { ArrowLeft, Menu, X, ArrowUpRight } from 'lucide-react'
+
+const navItems = [
+  { label: 'الرئيسية', to: 'hero' },
+  { label: 'معلومات عنا', to: 'about' },
+  { label: 'البوابات', to: 'portals' },
+]
 
 const LandingPage = () => {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
-  const navItemVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: (i) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: i * 0.1,
-        duration: 0.6,
-        type: 'spring',
-        stiffness: 100
-      }
-    })
-  }
+  const { scrollY } = useScroll()
+  const yImage = useTransform(scrollY, [0, 1000], [0, 200])
+  const yText = useTransform(scrollY, [0, 1000], [0, -100])
 
-  const titleVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        delay: 0.3,
-        duration: 0.8,
-        type: 'spring'
-      }
-    }
-  }
-
-  const quoteVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: 0.6,
-        duration: 0.8,
-        type: 'spring'
-      }
-    }
-  }
-
-  const buttonVariants = {
-    hidden: { opacity: 0, x: -50 },
-    visible: (i) => ({
-      opacity: 1,
-      x: 0,
-      transition: {
-        delay: 0.9 + (i * 0.15),
-        duration: 0.6,
-        type: 'spring'
-      }
-    })
-  }
-
-  const scrollIconVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        delay: 1.4,
-        duration: 0.8
-      }
-    },
-    float: {
-      y: [0, 10, 0],
-      transition: {
-        duration: 2,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
-  }
-
-  const mobileMenuVariants = {
-    hidden: { opacity: 0, x: '100%' },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        type: 'spring',
-        stiffness: 100
-      }
-    },
-    exit: {
-      opacity: 0,
-      x: '100%',
-      transition: {
-        duration: 0.3
-      }
-    }
-  }
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
-    <div
-      style={{ backgroundImage: `url(${Background})`, backgroundPosition: 'center', backgroundSize: 'cover' }}
-      className='min-h-screen w Styled-screen flex flex-col justify-center items-center z-50 relative'>
+    <div className='Styled bg-[var(--color-arch-bg)] min-h-screen text-[var(--color-arch-dark)] font-sans overflow-x-hidden selection:bg-[var(--color-arch-dark)] selection:text-[var(--color-arch-bg)]'>
 
-      {/* Desktop Navbar */}
-      <div className='bg-transparent h-[15vh] z-20 w-screen flex items-center px-4 md:px-10 justify-between max-md:hidden'>
-        <div className='flex items-center justify-center gap-[2vw]'>
-          <motion.div custom={0} initial="hidden" animate="visible" variants={navItemVariants}>
-            <Scroll>
-              <p className='Normal cursor-pointer text-white font-bold hover:text-transparent transform-3d transition-all'>رئيسية</p>
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-[var(--color-arch-bg)]/90 backdrop-blur-md py-4 shadow-sm' : 'bg-transparent py-6'}`}
+      >
+        <div className='max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between'>
+          {/* Logo */}
+          <div className='Styled text-2xl md:text-3xl tracking-wide font-medium cursor-pointer'>
+            <Scroll to="hero" smooth={true} duration={800}>
+              موسى بن نصير
             </Scroll>
-          </motion.div>
-          <motion.div custom={1} initial="hidden" animate="visible" variants={navItemVariants}>
-            <Scroll>
-              <p className='Normal cursor-pointer text-white font-bold hover:text-transparent transform-3d transition-all'>معلومات</p>
+          </div>
+
+          {/* Desktop Links */}
+          <div className='hidden md:flex items-center Styled gap-10'>
+            {navItems.map((item, i) => (
+              <Scroll key={i} to={item.to} smooth={true} duration={800} offset={-80} className='cursor-pointer text-sm tracking-wider uppercase opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2 group Arabic-Sans'>
+                {item.label}
+              </Scroll>
+            ))}
+            <Scroll to="portals" smooth={true} duration={800} offset={-80}>
+              <button className='text-xs uppercase tracking-widest border border-[var(--color-arch-dark)] px-5 py-2 hover:bg-[var(--color-arch-dark)] hover:text-[var(--color-arch-bg)] transition-colors duration-500 Styled'>
+                دخول
+              </button>
             </Scroll>
-          </motion.div>
-          <motion.div custom={2} initial="hidden" animate="visible" variants={navItemVariants}>
-            <Scroll>
-              <p className='Normal cursor-pointer text-white font-bold hover:text-transparent transform-3d transition-all'>تواصلوا معنا</p>
-            </Scroll>
-          </motion.div>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button className='md:hidden z-50 text-[var(--color-arch-dark)]' onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
         </div>
+      </motion.nav>
 
-        <motion.div
-          className='Styled font-thin text-3xl md:text-4xl lg:text-5xl text-white'
-          initial="hidden"
-          animate="visible"
-          variants={titleVariants}
-        >
-          <h1>مدرسة الجياد</h1>
-        </motion.div>
-      </div>
-
-      {/* Mobile Navbar */}
-      <div className='md:hidden bg-transparent h-[10vh] z-20 w-screen flex items-center px-4 justify-between'>
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          onClick={() => setMenuOpen(!menuOpen)}
-          className='text-white z-30'
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-8">
-            {menuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            )}
-          </svg>
-        </motion.button>
-
-        <motion.div
-          className='Styled font-thin text-3xl text-white'
-          initial="hidden"
-          animate="visible"
-          variants={titleVariants}
-        >
-          <h1>مدرسة الجياد</h1>
-        </motion.div>
-      </div>
-
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={mobileMenuVariants}
-            className='fixed top-0 right-0 h-screen w-[70vw] bg-black/95 backdrop-blur-md z-20 flex flex-col items-center justify-center gap-8 md:hidden'
+            initial={{ opacity: 0, y: '-100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '-100%' }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className='fixed inset-0 bg-[var(--color-arch-bg)] z-40 flex flex-col items-center justify-center gap-8'
           >
-            <Scroll onClick={() => setMenuOpen(false)}>
-              <p className='Normal cursor-pointer text-white text-2xl font-bold'>رئيسية</p>
-            </Scroll>
-            <Scroll onClick={() => setMenuOpen(false)}>
-              <p className='Normal cursor-pointer text-white text-2xl font-bold'>معلومات</p>
-            </Scroll>
-            <Scroll onClick={() => setMenuOpen(false)}>
-              <p className='Normal cursor-pointer text-white text-2xl font-bold'>تواصلوا معنا</p>
-            </Scroll>
+            {navItems.map((item, i) => (
+              <Scroll
+                key={i}
+                to={item.to}
+                smooth={true}
+                duration={800}
+                onClick={() => setMenuOpen(false)}
+                className='text-3xl Styled text-[var(--color-arch-dark)] cursor-pointer hover:opacity-60 transition-opacity'
+              >
+                {item.label}
+              </Scroll>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className='flex-1 w-screen flex flex-col items-center justify-center z-20 px-4'>
-        <motion.div
-          className='w-[90vw] md:w-[70vw] lg:w-[50vw] bg-white rounded-2xl flex justify-end text-center px-4 md:px-6 py-4 md:py-0'
-          initial="hidden"
-          animate="visible"
-          variants={quoteVariants}
-        >
-          <h1 className='Styled text-3xl md:text-4xl lg:text-5xl leading-relaxed md:leading-[4rem] lg:leading-[5rem] text-transparent bg-clip-text'
-            style={{
-              color: '#887240c0',
-            }}>
-            وَهَٰذَا كِتَابٌ أَنزَلْنَاهُ مُبَارَكٌ فَاتَّبِعُوهُ وَاتَّقُوا لَعَلَّكُمْ تُرْحَمُونَ
-          </h1>
-        </motion.div>
-
-        <div className='w-[90vw] md:w-[70vw] lg:w-[50vw] mt-[4vh] md:mt-[2vh] gap-4 md:gap-[3vw] flex flex-col md:flex-row items-center justify-center'>
-
-          {/* Teacher button → /teacherlogin */}
-          <Redirect to="/teacherlogin" className='w-full md:w-auto'>
-            <motion.button
-              custom={0}
-              initial="hidden"
-              animate="visible"
-              variants={buttonVariants}
-              whileHover={{ scale: 1.05, rotate: 5, backgroundColor: 'white', color: 'black', gap: '1vw' }}
-              transition={{ type: 'spring' }}
-              className='w-full md:w-auto p-3 md:p-2 bg-white/20 flex items-center justify-center text-lg md:text-xl cursor-pointer text-white Styled rounded-sm'
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="size-7 md:size-9 mt-2 rotate-180">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
-              </svg>
-              فضاء الاساتذة
-            </motion.button>
-          </Redirect>
-
-          {/* Parent button → /parent */}
-          <Redirect to="/parent" className='w-full md:w-auto'>
-            <motion.button
-              custom={1}
-              initial="hidden"
-              animate="visible"
-              variants={buttonVariants}
-              whileHover={{ scale: 1.05, rotate: 5, backgroundColor: 'white', color: 'black', gap: '1vw' }}
-              transition={{ type: 'spring' }}
-              className='w-full md:w-auto p-3 md:p-2 bg-white/20 flex items-center justify-center text-lg md:text-xl cursor-pointer text-white Styled rounded-sm'
-            >
-              فضاء الاولياء
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="size-7 md:size-9 mt-2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
-              </svg>
-            </motion.button>
-          </Redirect>
-
+      {/* ─── HERO SECTION ─────────────────────────────────────────────────── */}
+      <section id="hero" className='relative h-screen w-full flex flex-col md:flex-row overflow-hidden pt-20 md:pt-0'>
+        {/* Left Side (Beige Background + Text) */}
+        <div className='w-full md:w-1/2 h-1/2 md:h-full flex flex-col justify-center px-6 md:px-16 lg:px-24 z-10 relative bg-[var(--color-arch-bg)]'>
+          <motion.div
+            style={{ y: yText }}
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+          >
+            <p className='text-sm tracking-[0.2em] font-light uppercase opacity-60 mb-6'>مدرسة قرآنية نموذجية</p>
+            <h1 className='font-serif text-[4rem] md:text-[6rem] lg:text-[8rem] leading-[0.85] tracking-tight Arabic-Serif'>
+              موسى<br /> بن نصير
+            </h1>
+            <p className='mt-8 text-lg md:text-xl font-light opacity-80 max-w-md leading-relaxed Arabic-Sans border-l border-[var(--color-arch-accent)] pl-4 ml-2'>
+              وَهَٰذَا كِتَابٌ أَنزَلْنَاهُ مُبَارَكٌ فَاتَّبِعُوهُ وَاتَّقُوا لَعَلَّكُمْ تُرْحَمُونَ
+            </p>
+            <div className='mt-12 flex items-center gap-6'>
+              <Scroll to="portals" smooth={true} duration={800} className='group cursor-pointer flex items-center gap-3 text-sm tracking-widest uppercase border-b border-[var(--color-arch-dark)] pb-1 hover:text-[var(--color-arch-accent)] hover:border-[var(--color-arch-accent)] transition-colors Arabic-Sans'>
+                ابدأ
+                <ArrowUpRight size={16} className='group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform' />
+              </Scroll>
+            </div>
+          </motion.div>
         </div>
 
-        <Scroll>
-          <motion.svg
-            initial="hidden"
-            animate="visible"
-            variants={scrollIconVariants}
-            whileHover={{ scale: 1.05, y: '0.5vh' }}
-            style={{ animation: 'float 2s ease-in-out infinite' }}
-            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="white" className="size-8 md:size-10 cursor-pointer absolute bottom-5 right-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5" />
-          </motion.svg>
-        </Scroll>
-      </div>
+        {/* Right Side (Image + Overlay) */}
+        <div className='w-full md:w-1/2 h-1/2 md:h-full relative overflow-hidden'>
+          <motion.div
+            style={{ y: yImage }}
+            className='absolute inset-0 w-full h-[120%]'
+          >
+            <div className='absolute inset-0 bg-black/20 z-10' /> {/* Subtle darken for contrast */}
+            <img
+              src={Background}
+              alt="Arch Vision Architecture"
+              className='w-full h-full object-cover object-center transform scale-105'
+            />
+          </motion.div>
+          {/* Aesthetic Text Overlay on Image */}
+          <div className='absolute inset-0 z-20 flex items-center justify-center md:justify-start pointer-events-none opacity-10 md:opacity-30 mix-blend-overlay'>
+            <h1 className='text-[8rem] md:text-[14rem] font-serif text-white tracking-tighter whitespace-nowrap ml-0 md:-ml-32 Arabic-Serif'>
+              الجياد
+            </h1>
+          </div>
+        </div>
+      </section>
 
-      <motion.div
-        className='h-screen w-screen top-0 absolute bg-gradient-to-b from-transparent to-black z-10 pointer-events-none'
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-      />
+      {/* ─── ABOUT SECTION ────────────────────────────────────────────────── */}
+      <section id="about" className='py-24 md:py-32 px-6 md:px-12 max-w-7xl mx-auto'>
+        <div className='flex flex-col md:flex-row gap-16 lg:gap-24 items-center'>
+          <div className='w-full md:w-5/12 aspect-[3/4] overflow-hidden relative'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className='w-full h-full'
+            >
+              <img src={Background} alt="About Architecture" className='w-full h-full object-cover' />
+            </motion.div>
+            <div className='absolute inset-0 border border-[var(--color-arch-dark)]/10 m-4 pointer-events-none' />
+          </div>
+          <div className='w-full md:w-7/12'>
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8 }}
+            >
+              <h2 className='text-3xl md:text-5xl font-serif mb-8 leading-tight Arabic-Serif'>
+                <br />انضم لأزيد من
+              </h2>
+              <p className='text-lg font-light opacity-75 leading-relaxed max-w-xl Arabic-Sans'>
+                70 + طالب
+              </p>
+              <h2 className='text-3xl md:text-5xl font-serif mb-8 leading-tight Arabic-Serif'>
+                <br /> مؤطرين من طرف
+              </h2>
+              <p className='text-lg font-light opacity-75  leading-relaxed max-w-xl Arabic-Sans'>
+                الأستاذ أسماعيل فخوري
+                <br />
+                الأستاذ بوزيان هواري
+              </p>
+              <h2 className='text-3xl md:text-5xl font-serif mb-8 leading-tight Arabic-Serif'>
+                <br /> يوميا ما عدا الخميس و الجمعة
+              </h2>
+              <p className='text-lg font-light opacity-75 mb-10 leading-relaxed max-w-xl Arabic-Sans'>
+                الفوج الأول:  14-16 زوالا               <br />
 
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(10px); }
-        }
-      `}</style>
+                الفوج الثاني:  17-18
+                <br />
+                أناث :  15-16:30 زوالا
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PORTALS SECTION ──────────────────────────────────────────────── */}
+      <section id="portals" className='py-24 md:py-32 bg-[var(--color-arch-gray)] px-6 md:px-12'>
+        <div className='max-w-7xl mx-auto'>
+          <div className='text-center mb-16 md:mb-24'>
+            <h2 className='text-4xl md:text-5xl font-serif mb-4 Arabic-Serif'>بوابات الدخول</h2>
+            <p className='text-lg font-light opacity-75 Arabic-Sans'>اختر الفضاء المناسب لك للمتابعة</p>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12'>
+            {/* Teacher Portal Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className='group bg-[var(--color-arch-bg)] p-10 md:p-14 border border-[var(--color-arch-dark)]/10 hover:border-[var(--color-arch-dark)]/30 transition-colors relative overflow-hidden flex flex-col items-start'
+            >
+              <div className='mb-8 p-4 bg-[var(--color-arch-gray)] rounded-full text-[var(--color-arch-accent)]'>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+                </svg>
+              </div>
+              <h3 className='text-3xl font-serif mb-4 Arabic-Serif'>فضاء الأساتذة</h3>
+              <p className='text-base font-light opacity-75 mb-10 leading-relaxed Arabic-Sans'>
+                مساحة مخصصة للمعلمين لإدارة الفصول، تتبع تقدم الطلاب، وتنظيم الجداول بكل سهولة ويسر.
+              </p>
+              <Redirect to="/teacherlogin" className='mt-auto w-full'>
+                <button className='w-full py-4 border border-[var(--color-arch-accent)] text-[var(--color-arch-accent)] group-hover:bg-[var(--color-arch-accent)] group-hover:text-white transition-colors duration-300 Arabic-Sans flex justify-center items-center gap-2'>
+                  تسجيل الدخول <ArrowLeft size={16} />
+                </button>
+              </Redirect>
+            </motion.div>
+
+            {/* Parent Portal Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className='group bg-[var(--color-arch-bg)] p-10 md:p-14 border border-[var(--color-arch-dark)]/10 hover:border-[var(--color-arch-dark)]/30 transition-colors relative overflow-hidden flex flex-col items-start'
+            >
+              <div className='mb-8 p-4 bg-[var(--color-arch-gray)] rounded-full text-[var(--color-arch-accent)]'>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                </svg>
+              </div>
+              <h3 className='text-3xl font-serif mb-4 Arabic-Serif'>فضاء الأولياء</h3>
+              <p className='text-base font-light opacity-75 mb-10 leading-relaxed Arabic-Sans'>
+                نافذتك لمتابعة تطور أبنائك، والاطلاع على حضورهم وتقييماتهم والتواصل الفعال مع الإدارة.
+              </p>
+              <Redirect to="/parentlogin" className='mt-auto w-full'>
+                <button className='w-full py-4 border border-[var(--color-arch-accent)] text-[var(--color-arch-accent)] group-hover:bg-[var(--color-arch-accent)] group-hover:text-white transition-colors duration-300 Arabic-Sans flex justify-center items-center gap-2'>
+                  تسجيل الدخول <ArrowLeft size={16} />
+                </button>
+              </Redirect>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* ─── FOOTER ───────────────────────────────────────────────────────── */}
+      <footer className='py-8 border-t border-[var(--color-arch-dark)]/10 text-center px-6'>
+        <p className='text-sm font-light opacity-60 Arabic-Sans'>
+          © {new Date().getFullYear()} مدرسة موسى بن نصير . جميع الحقوق محفوظة.
+        </p>
+      </footer>
+
     </div>
   )
 }

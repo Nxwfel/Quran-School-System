@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 
 const API = 'https://quranicshooldkjudsadup9ewidu79poadwjaiok.onrender.com'
 
@@ -35,10 +36,8 @@ const useApi = () =>
   }, [])
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-const scoreColor = s => s >= 90 ? '#4ade80' : s >= 75 ? '#fbbf24' : '#f87171'
-const scoreLabel = s => s >= 90 ? 'ممتاز' : s >= 75 ? 'جيد' : 'يحتاج تحسين'
+const scoreColor = s => s >= 90 ? 'var(--color-arch-accent)' : s >= 75 ? 'var(--color-arch-dark)' : '#f87171'
 const typeIcon = t => t === 'حفظ' ? '📚' : t === 'مراجعة' ? '🔄' : '📖'
-const typeColor = t => t === 'حفظ' ? '#818cf8' : t === 'مراجعة' ? '#34d399' : '#f472b6'
 
 // ─── Toast ──────────────────────────────────────────────────────────────────
 const Toast = ({ message, type }) => (
@@ -50,13 +49,13 @@ const Toast = ({ message, type }) => (
     style={{
       position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
       zIndex: 9999, display: 'flex', alignItems: 'center', gap: 10,
-      padding: '12px 24px', borderRadius: 16,
-      background: type === 'error' ? 'rgba(15,3,3,0.97)' : 'rgba(3,12,8,0.97)',
-      border: `1px solid ${type === 'error' ? 'rgba(248,113,113,0.35)' : 'rgba(74,222,128,0.35)'}`,
-      color: type === 'error' ? '#f87171' : '#4ade80',
-      fontSize: 13, fontFamily: 'var(--font-body)',
+      padding: '12px 24px', borderRadius: 0,
+      background: 'white',
+      border: `1px solid ${type === 'error' ? 'rgba(248,113,113,0.35)' : 'var(--color-arch-accent)'}`,
+      color: type === 'error' ? '#f87171' : 'var(--color-arch-dark)',
+      fontSize: 13, fontFamily: 'var(--font-sans)',
       backdropFilter: 'blur(24px)',
-      boxShadow: `0 16px 40px ${type === 'error' ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}`,
+      boxShadow: `0 16px 40px rgba(0,0,0,0.05)`,
       whiteSpace: 'nowrap',
     }}
   >
@@ -74,11 +73,10 @@ const ScoreRing = ({ score, size = 56 }) => {
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={2} />
         <motion.circle
           cx={size / 2} cy={size / 2} r={r} fill="none"
-          stroke={color} strokeWidth={4}
-          strokeLinecap="round"
+          stroke={color} strokeWidth={2}
           strokeDasharray={circ}
           initial={{ strokeDashoffset: circ }}
           animate={{ strokeDashoffset: circ - dash }}
@@ -87,7 +85,7 @@ const ScoreRing = ({ score, size = 56 }) => {
       </svg>
       <div style={{
         position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: size < 50 ? 11 : 14, fontFamily: 'var(--font-display)', color, fontWeight: 700,
+        fontSize: size < 50 ? 11 : 14, fontFamily: 'var(--font-sans)', color, fontWeight: 500,
       }}>
         {score}
       </div>
@@ -102,30 +100,30 @@ const StatCard = ({ icon, value, label, accent, delay = 0 }) => (
     transition={{ delay, type: 'spring', stiffness: 100 }}
     whileHover={{ y: -3, transition: { duration: 0.18 } }}
     style={{
-      borderRadius: 20, padding: '20px 24px',
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 0, padding: '24px 32px',
+      background: 'white',
+      border: '1px solid rgba(0,0,0,0.05)',
       display: 'flex', flexDirection: 'column', gap: 12,
     }}
   >
-    <div style={{ fontSize: 26 }}>{icon}</div>
-    <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: accent, lineHeight: 1 }}>{value}</div>
-    <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>{label}</div>
+    <div style={{ fontSize: 26, color: 'var(--color-arch-accent)' }}>{icon}</div>
+    <div className='Styled' style={{ fontSize: 36, color: 'var(--color-arch-dark)', lineHeight: 1 }}>{value}</div>
+    <div className='Arabic-Sans' style={{ fontSize: 13, color: 'var(--color-arch-accent)' }}>{label}</div>
   </motion.div>
 )
 
 // ─── Empty ───────────────────────────────────────────────────────────────────
 const Empty = ({ label }) => (
   <div style={{ padding: '52px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-    <div style={{ fontSize: 36, opacity: 0.15 }}>⌀</div>
-    <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'rgba(255,255,255,0.22)' }}>{label}</p>
+    <div style={{ fontSize: 36, opacity: 0.15, color: 'var(--color-arch-dark)' }}>⌀</div>
+    <p className='Arabic-Sans' style={{ fontSize: 13, color: 'var(--color-arch-accent)', opacity: 0.7 }}>{label}</p>
   </div>
 )
 
 const Spin = () => (
   <motion.div
     animate={{ rotate: 360 }} transition={{ duration: 0.75, repeat: Infinity, ease: 'linear' }}
-    style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(129,140,248,0.2)', borderTopColor: '#818cf8' }}
+    style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(0,0,0,0.1)', borderTopColor: 'var(--color-arch-accent)' }}
   />
 )
 
@@ -148,13 +146,13 @@ const DashboardTab = ({ children, attendanceMap, progressMap }) => {
       style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
     >
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
-        <StatCard icon="👨‍👩‍👧‍👦" value={children.length} label="عدد الأبناء" accent="#818cf8" delay={0} />
-        <StatCard icon="✓" value={totalPresent} label="إجمالي الحضور" accent="#4ade80" delay={0.06} />
-        <StatCard icon="📖" value={totalSessions} label="جلسات التقدم" accent="#38bdf8" delay={0.12} />
+        <StatCard icon="👨‍👩‍👧‍👦" value={children.length} label="عدد الأبناء" delay={0} />
+        <StatCard icon="✓" value={totalPresent} label="إجمالي الحضور" delay={0.06} />
+        <StatCard icon="📖" value={totalSessions} label="جلسات التقدم" delay={0.12} />
       </div>
 
       {/* Children overview */}
-      <div style={{ borderRadius: 24, padding: '28px 32px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: '28px 32px', background: 'var(--color-arch-gray)', border: '1px solid rgba(0,0,0,0.05)' }}>
         <SectionHeader icon="👨‍👩‍👧‍👦" title="أبنائي" />
         {children.length === 0 ? <Empty label="لا يوجد أبناء مسجلون" /> : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -163,12 +161,12 @@ const DashboardTab = ({ children, attendanceMap, progressMap }) => {
               return (
                 <motion.div key={child.id}
                   initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07 }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 16, background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.05)' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', background: 'white', border: '1px solid rgba(0,0,0,0.05)' }}
                 >
                   <Avatar name={child.name} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: '#fff', margin: 0 }}>{child.name}</p>
-                    {last && <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>
+                    <p className='Styled' style={{ fontSize: 18, color: 'var(--color-arch-dark)', margin: 0 }}>{child.name}</p>
+                    {last && <p className='Arabic-Sans' style={{ fontSize: 12, color: 'var(--color-arch-accent)', margin: '3px 0 0' }}>
                       آخر جلسة: {last.surah} — {last.type}
                     </p>}
                   </div>
@@ -181,7 +179,7 @@ const DashboardTab = ({ children, attendanceMap, progressMap }) => {
       </div>
 
       {/* Recent activity */}
-      <div style={{ borderRadius: 24, padding: '28px 32px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: '28px 32px', background: 'var(--color-arch-gray)', border: '1px solid rgba(0,0,0,0.05)' }}>
         <SectionHeader icon="🔔" title="آخر النشاطات" />
         {allProgress.length === 0 ? <Empty label="لا توجد جلسات مسجلة بعد" /> : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -216,23 +214,23 @@ const ChildrenTab = ({ children, searchQuery, setSearchQuery, loading, setActive
               whileHover={{ y: -4, transition: { duration: 0.18 } }}
               onClick={() => { setSelectedChild(child); setActiveTab('progress') }}
               style={{
-                borderRadius: 20, padding: 22, cursor: 'pointer',
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                padding: 22, cursor: 'pointer',
+                background: 'white', border: '1px solid rgba(0,0,0,0.05)',
                 display: 'flex', flexDirection: 'column', gap: 16,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <Avatar name={child.name} size={48} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{child.name}</p>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'rgba(255,255,255,0.33)', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p className='Styled' style={{ fontSize: 18, color: 'var(--color-arch-dark)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{child.name}</p>
+                  <p className='Arabic-Sans' style={{ fontSize: 12, color: 'var(--color-arch-accent)', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {child.teacher_name || `المعلم #${child.teacher_id}`}
                   </p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <Chip label="الحزب" value={child.hizb ?? '—'} />
-                <Chip label={`طالب #${child.id}`} value={child.surah || '—'} accent="#a78bfa" />
+                <Chip label={`طالب #${child.id}`} value={child.surah || '—'} accent="var(--color-arch-dark)" />
               </div>
             </motion.div>
           ))}
@@ -248,7 +246,7 @@ const AttendanceTab = ({ children, attendanceMap, loadingAttendance }) => (
     initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
     style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
   >
-    <div style={{ borderRadius: 24, padding: '28px 32px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ padding: '28px 32px', background: 'var(--color-arch-gray)', border: '1px solid rgba(0,0,0,0.05)' }}>
       <SectionHeader icon="📅" title="سجل الحضور" />
       {loadingAttendance ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}><Spin /></div>
@@ -267,38 +265,38 @@ const AttendanceTab = ({ children, attendanceMap, loadingAttendance }) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
                   <Avatar name={child.name} size={44} />
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: '#fff', margin: 0 }}>{child.name}</p>
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>
+                    <p className='Styled' style={{ fontSize: 18, color: 'var(--color-arch-dark)', margin: 0 }}>{child.name}</p>
+                    <p className='Arabic-Sans' style={{ fontSize: 12, color: 'var(--color-arch-accent)', margin: '3px 0 0' }}>
                       {presentCount} حضور من {records.length} جلسة
                     </p>
                   </div>
                   {/* Attendance bar */}
                   <div style={{ textAlign: 'left', minWidth: 80 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: pct >= 75 ? '#4ade80' : '#f87171' }}>{pct}%</div>
-                    <div style={{ height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.07)', marginTop: 6, overflow: 'hidden', width: 80 }}>
+                    <div className='Arabic-Sans' style={{ fontSize: 20, color: pct >= 75 ? 'var(--color-arch-accent)' : '#f87171' }}>{pct}%</div>
+                    <div style={{ height: 2, background: 'rgba(0,0,0,0.05)', marginTop: 6, overflow: 'hidden', width: 80 }}>
                       <motion.div
                         initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
-                        style={{ height: '100%', borderRadius: 4, background: pct >= 75 ? '#4ade80' : '#f87171' }}
+                        style={{ height: '100%', background: pct >= 75 ? 'var(--color-arch-accent)' : '#f87171' }}
                       />
                     </div>
                   </div>
                 </div>
                 {records.length === 0 ? (
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'rgba(255,255,255,0.22)' }}>لا توجد سجلات حضور</p>
+                  <p className='Arabic-Sans' style={{ fontSize: 12, color: 'var(--color-arch-accent)' }}>لا توجد سجلات حضور</p>
                 ) : (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {records.slice(0, 21).map((r, i) => (
                       <div key={r.id ?? i}
                         style={{
-                          borderRadius: 12, padding: '8px 12px', textAlign: 'center', minWidth: 64,
-                          background: r.present ? 'rgba(74,222,128,0.07)' : 'rgba(248,113,113,0.07)',
-                          border: `1px solid ${r.present ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'}`,
+                          padding: '8px 12px', textAlign: 'center', minWidth: 64,
+                          background: r.present ? 'rgba(122,114,101,0.05)' : 'rgba(248,113,113,0.05)',
+                          border: `1px solid ${r.present ? 'rgba(122,114,101,0.2)' : 'rgba(248,113,113,0.2)'}`,
                         }}
                       >
-                        <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, color: r.present ? '#4ade80' : '#f87171', margin: 0 }}>
+                        <p className='Arabic-Sans' style={{ fontSize: 16, color: r.present ? 'var(--color-arch-accent)' : '#f87171', margin: 0 }}>
                           {r.present ? '✓' : '✗'}
                         </p>
-                        <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '4px 0 0' }}>
+                        <p className='Arabic-Sans' style={{ fontSize: 10, color: 'var(--color-arch-dark)', margin: '4px 0 0' }}>
                           {r.date ? new Date(r.date).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }) : `#${i + 1}`}
                         </p>
                       </div>
@@ -306,7 +304,7 @@ const AttendanceTab = ({ children, attendanceMap, loadingAttendance }) => (
                   </div>
                 )}
                 {ci < children.length - 1 && (
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', marginTop: 28 }} />
+                  <div style={{ height: 1, background: 'rgba(0,0,0,0.05)', marginTop: 28 }} />
                 )}
               </motion.div>
             )
@@ -336,12 +334,13 @@ const ProgressTab = ({ children, progressMap, loadingProgress, selectedChild, se
           {children.map(child => (
             <motion.button key={child.id} whileTap={{ scale: 0.95 }}
               onClick={() => setSelectedChild(child)}
+              className='Arabic-Sans'
               style={{
-                padding: '8px 18px', borderRadius: 12, cursor: 'pointer',
-                fontFamily: 'var(--font-body)', fontSize: 13,
-                background: active?.id === child.id ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${active?.id === child.id ? 'rgba(129,140,248,0.45)' : 'rgba(255,255,255,0.07)'}`,
-                color: active?.id === child.id ? '#a5b4fc' : 'rgba(255,255,255,0.45)',
+                padding: '8px 18px', cursor: 'pointer',
+                fontSize: 13,
+                background: active?.id === child.id ? 'var(--color-arch-dark)' : 'white',
+                border: `1px solid ${active?.id === child.id ? 'var(--color-arch-dark)' : 'rgba(0,0,0,0.1)'}`,
+                color: active?.id === child.id ? 'white' : 'var(--color-arch-dark)',
                 transition: 'all 0.18s',
               }}
             >{child.name}</motion.button>
@@ -354,20 +353,20 @@ const ProgressTab = ({ children, progressMap, loadingProgress, selectedChild, se
       ) : !active ? (
         <Empty label="لا يوجد أبناء" />
       ) : (
-        <div style={{ borderRadius: 24, overflow: 'hidden', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ background: 'var(--color-arch-gray)', border: '1px solid rgba(0,0,0,0.05)' }}>
           {/* Header */}
-          <div style={{ padding: '28px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+          <div style={{ padding: '28px 32px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
             <Avatar name={active.name} size={56} />
             <div style={{ flex: 1 }}>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: '#fff', margin: 0 }}>{active.name}</h3>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: '5px 0 0' }}>
+              <h3 className='Styled' style={{ fontSize: 22, color: 'var(--color-arch-dark)', margin: 0 }}>{active.name}</h3>
+              <p className='Arabic-Sans' style={{ fontSize: 13, color: 'var(--color-arch-accent)', margin: '5px 0 0' }}>
                 {active.teacher_name || `المعلم #${active.teacher_id}`}
               </p>
             </div>
             {avg !== null && (
               <div style={{ textAlign: 'center' }}>
                 <ScoreRing score={avg} size={64} />
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>المتوسط</p>
+                <p className='Arabic-Sans' style={{ fontSize: 11, color: 'var(--color-arch-accent)', marginTop: 6 }}>المتوسط</p>
               </div>
             )}
           </div>
@@ -396,12 +395,12 @@ const ProgressTab = ({ children, progressMap, loadingProgress, selectedChild, se
 const Avatar = ({ name, size = 44 }) => {
   const initials = (name || '؟').slice(0, 1)
   return (
-    <div style={{
-      width: size, height: size, borderRadius: Math.round(size * 0.38),
-      background: 'linear-gradient(135deg, rgba(129,140,248,0.28), rgba(244,114,182,0.28))',
-      border: '1px solid rgba(255,255,255,0.1)',
+    <div className='Styled' style={{
+      width: size, height: size, borderRadius: '50%',
+      background: 'white',
+      border: '1px solid rgba(0,0,0,0.1)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'var(--font-display)', fontSize: size * 0.38, color: 'rgba(255,255,255,0.8)',
+      fontSize: size * 0.4, color: 'var(--color-arch-dark)',
       flexShrink: 0,
     }}>
       {initials}
@@ -409,18 +408,18 @@ const Avatar = ({ name, size = 44 }) => {
   )
 }
 
-const Chip = ({ label, value, accent = 'rgba(255,255,255,0.65)' }) => (
-  <div style={{ borderRadius: 12, padding: '10px 14px', background: 'rgba(0,0,0,0.22)' }}>
-    <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{label}</p>
-    <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: accent, margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</p>
+const Chip = ({ label, value, accent = 'var(--color-arch-accent)' }) => (
+  <div style={{ padding: '10px 14px', background: 'var(--color-arch-bg)' }}>
+    <p className='Arabic-Sans' style={{ fontSize: 11, color: 'var(--color-arch-accent)', margin: 0 }}>{label}</p>
+    <p className='Arabic-Sans' style={{ fontSize: 15, color: accent, margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</p>
   </div>
 )
 
 const SectionHeader = ({ icon, title }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
     <span style={{ fontSize: 18 }}>{icon}</span>
-    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: '#fff', margin: 0 }}>{title}</h3>
-    <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left, transparent, rgba(255,255,255,0.06))' }} />
+    <h3 className='Styled' style={{ fontSize: 24, color: 'var(--color-arch-dark)', margin: 0 }}>{title}</h3>
+    <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.05)' }} />
   </div>
 )
 
@@ -429,19 +428,20 @@ const SearchInput = ({ value, onChange, placeholder }) => (
     <input
       type="text" value={value} onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
+      className='Arabic-Sans'
       style={{
         width: '100%', padding: '12px 20px 12px 44px',
-        borderRadius: 16, fontFamily: 'var(--font-body)', fontSize: 14,
-        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-        color: '#fff', outline: 'none', boxSizing: 'border-box',
+        fontSize: 14,
+        background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+        color: 'var(--color-arch-dark)', outline: 'none', boxSizing: 'border-box',
         transition: 'border-color 0.2s',
       }}
-      onFocus={e => e.target.style.borderColor = 'rgba(129,140,248,0.45)'}
-      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+      onFocus={e => e.target.style.borderColor = 'var(--color-arch-dark)'}
+      onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.1)'}
     />
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-      strokeWidth={2} stroke="currentColor"
-      style={{ width: 16, height: 16, position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.25)', pointerEvents: 'none' }}
+      strokeWidth={1.5} stroke="currentColor"
+      style={{ width: 16, height: 16, position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-arch-accent)', pointerEvents: 'none' }}
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
     </svg>
@@ -453,32 +453,31 @@ const ActivityRow = ({ p, delay = 0, showChild = false }) => (
     initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}
     style={{
       display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 18px',
-      borderRadius: 16, background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.05)',
+      background: 'white', border: '1px solid rgba(0,0,0,0.05)',
     }}
   >
     <div style={{
-      width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-      background: `${typeColor(p.type)}18`,
-      border: `1px solid ${typeColor(p.type)}30`,
+      width: 36, height: 36, flexShrink: 0,
+      border: `1px solid rgba(0,0,0,0.05)`, background: 'var(--color-arch-gray)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, marginTop: 1,
     }}>
       {typeIcon(p.type)}
     </div>
     <div style={{ flex: 1, minWidth: 0 }}>
       {showChild && p.childName && (
-        <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, color: '#a5b4fc', margin: '0 0 3px' }}>{p.childName}</p>
+        <p className='Arabic-Sans' style={{ fontSize: 13, color: 'var(--color-arch-accent)', margin: '0 0 3px' }}>{p.childName}</p>
       )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, color: '#fff' }}>{p.surah}</span>
+        <span className='Arabic-Sans' style={{ fontSize: 15, color: 'var(--color-arch-dark)' }}>{p.surah}</span>
         <ScoreRing score={p.score} size={38} />
       </div>
-      <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'rgba(255,255,255,0.38)', margin: '4px 0 0' }}>
+      <p className='Arabic-Sans' style={{ fontSize: 12, color: 'var(--color-arch-accent)', margin: '4px 0 0' }}>
         آيات {p.from_ayah}–{p.to_ayah} ·{' '}
-        <span style={{ color: typeColor(p.type) }}>{p.type}</span>
+        <span style={{ color: 'var(--color-arch-dark)' }}>{p.type}</span>
         {' '}· حزب {p.hizb}
       </p>
       {p.notes && (
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0', lineHeight: 1.5 }}>
+        <p className='Arabic-Sans' style={{ fontSize: 12, color: 'var(--color-arch-dark)', margin: '8px 0 0', lineHeight: 1.5, background: 'var(--color-arch-bg)', padding: '8px 12px' }}>
           💬 {p.notes}
         </p>
       )}
@@ -575,113 +574,89 @@ const ParentPage = () => {
   }
 
   return (
-    <>
-      {/* Global font + style injection */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500&display=swap');
-        :root {
-          --font-display: 'Amiri', serif;
-          --font-body: 'IBM Plex Sans Arabic', sans-serif;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #080810; }
-        input::placeholder { color: rgba(255,255,255,0.22); }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
-        button { border: none; background: none; cursor: pointer; }
-      `}</style>
+    <div className="min-h-screen w-full bg-[var(--color-arch-bg)] text-[var(--color-arch-dark)] overflow-x-hidden selection:bg-[var(--color-arch-dark)] selection:text-[var(--color-arch-bg)]" style={{ direction: 'rtl' }}>
 
-      <div style={{ minHeight: '100vh', width: '100vw', background: '#080810', color: '#fff', overflowX: 'hidden', direction: 'rtl', position: 'relative' }}>
-
-        {/* Background */}
-        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-          <div style={{ position: 'absolute', top: '-15%', right: '-8%', width: 640, height: 640, borderRadius: '50%', background: 'rgba(99,102,241,0.05)', filter: 'blur(120px)' }} />
-          <div style={{ position: 'absolute', bottom: '-15%', left: '-8%', width: 640, height: 640, borderRadius: '50%', background: 'rgba(244,114,182,0.04)', filter: 'blur(120px)' }} />
-          <div style={{ position: 'absolute', inset: 0, opacity: 0.12, backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '36px 36px' }} />
+      {/* Header */}
+      <motion.header
+        initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+        style={{ padding: '36px 40px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, maxWidth: 1100, margin: '0 auto' }}
+      >
+        <div>
+          <h1 className='Styled' style={{ fontSize: 'clamp(28px, 5vw, 46px)', color: 'var(--color-arch-dark)', lineHeight: 1.2 }}>
+            فضاء الأولياء
+          </h1>
+          <p className='Arabic-Sans' style={{ fontSize: 13, color: 'var(--color-arch-accent)', marginTop: 8 }}>
+            {loadingChildren ? 'جاري التحميل...' : `${children.length} ${children.length === 1 ? 'ابن مسجل' : 'أبناء مسجلون'}`}
+          </p>
         </div>
-
-        {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-          style={{ position: 'relative', zIndex: 10, padding: '36px 40px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, maxWidth: 1100, margin: '0 auto' }}
-        >
-          <div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 46px)', color: '#fff', lineHeight: 1.2 }}>
-              فضاء ولي الأمر
-            </h1>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'rgba(255,255,255,0.32)', marginTop: 8 }}>
-              {loadingChildren ? 'جاري التحميل...' : `${children.length} ${children.length === 1 ? 'ابن مسجل' : 'أبناء مسجلون'}`}
-            </p>
-          </div>
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            onClick={logout}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              padding: '9px 18px', borderRadius: 12, marginTop: 4,
-              fontFamily: 'var(--font-body)', fontSize: 12,
-              background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.14)',
-              color: 'rgba(252,165,165,0.6)', transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.color = '#fca5a5' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; e.currentTarget.style.color = 'rgba(252,165,165,0.6)' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{ width: 14, height: 14 }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-            </svg>
-            خروج
-          </motion.button>
-        </motion.header>
-
-        {/* Tab Bar */}
-        <motion.nav
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+        <motion.button className='Arabic-Sans' whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={logout}
           style={{
-            position: 'sticky', top: 0, zIndex: 30,
-            background: 'rgba(8,8,16,0.88)', backdropFilter: 'blur(24px)',
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
-            padding: '10px 40px',
+            display: 'flex', alignItems: 'center', gap: 7,
+            padding: '9px 18px', marginTop: 4,
+            fontSize: 12,
+            background: 'transparent', border: '1px solid var(--color-arch-dark)',
+            color: 'var(--color-arch-dark)', transition: 'all 0.2s',
           }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-arch-dark)'; e.currentTarget.style.color = 'var(--color-arch-bg)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-arch-dark)' }}
         >
-          <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 6 }}>
-            {TABS.map(tab => {
-              const active = activeTab === tab.id
-              return (
-                <motion.button key={tab.id} onClick={() => setActiveTab(tab.id)} whileTap={{ scale: 0.95 }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '8px 16px', borderRadius: 12,
-                    fontFamily: 'var(--font-body)', fontSize: 13,
-                    background: active ? 'rgba(129,140,248,0.14)' : 'transparent',
-                    border: `1px solid ${active ? 'rgba(129,140,248,0.38)' : 'transparent'}`,
-                    color: active ? '#a5b4fc' : 'rgba(255,255,255,0.32)',
-                    transition: 'all 0.18s',
-                  }}
-                >
-                  <span style={{ fontSize: 15 }}>{tab.icon}</span>
-                  <span style={{ display: window.innerWidth < 480 ? 'none' : 'inline' }}>{tab.label}</span>
-                </motion.button>
-              )
-            })}
-          </div>
-        </motion.nav>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: 14, height: 14 }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+          خروج
+        </motion.button>
+      </motion.header>
 
-        {/* Content */}
-        <main style={{ position: 'relative', zIndex: 5, padding: '28px 40px 60px', maxWidth: 1100, margin: '0 auto' }}>
-          <AnimatePresence mode="wait">
-            {activeTab === 'dashboard' && <DashboardTab key="dashboard"  {...tabProps} />}
-            {activeTab === 'children' && <ChildrenTab key="children"   {...tabProps} />}
-            {activeTab === 'attendance' && <AttendanceTab key="attendance" {...tabProps} />}
-            {activeTab === 'progress' && <ProgressTab key="progress"   {...tabProps} />}
-          </AnimatePresence>
-        </main>
+      {/* Tab Bar */}
+      <motion.nav
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+        style={{
+          position: 'sticky', top: 0, zIndex: 30,
+          background: 'var(--color-arch-bg)',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
+          padding: '10px 40px',
+        }}
+      >
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 6 }}>
+          {TABS.map(tab => {
+            const active = activeTab === tab.id
+            return (
+              <motion.button key={tab.id} onClick={() => setActiveTab(tab.id)} whileTap={{ scale: 0.95 }}
+                className='Arabic-Sans'
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 16px',
+                  fontSize: 13,
+                  background: active ? 'var(--color-arch-dark)' : 'transparent',
+                  border: `1px solid ${active ? 'var(--color-arch-dark)' : 'transparent'}`,
+                  color: active ? 'var(--color-arch-bg)' : 'var(--color-arch-accent)',
+                  transition: 'all 0.18s',
+                }}
+              >
+                <span style={{ fontSize: 15 }}>{tab.icon}</span>
+                <span style={{ display: window.innerWidth < 480 ? 'none' : 'inline' }}>{tab.label}</span>
+              </motion.button>
+            )
+          })}
+        </div>
+      </motion.nav>
 
-        {/* Toast */}
-        <AnimatePresence>
-          {toast && <Toast key="toast" message={toast.message} type={toast.type} />}
+      {/* Content */}
+      <main style={{ position: 'relative', zIndex: 5, padding: '28px 40px 60px', maxWidth: 1100, margin: '0 auto' }}>
+        <AnimatePresence mode="wait">
+          {activeTab === 'dashboard' && <DashboardTab key="dashboard"  {...tabProps} />}
+          {activeTab === 'children' && <ChildrenTab key="children"   {...tabProps} />}
+          {activeTab === 'attendance' && <AttendanceTab key="attendance" {...tabProps} />}
+          {activeTab === 'progress' && <ProgressTab key="progress"   {...tabProps} />}
         </AnimatePresence>
-      </div>
-    </>
+      </main>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && <Toast key="toast" message={toast.message} type={toast.type} />}
+      </AnimatePresence>
+    </div>
   )
 }
 

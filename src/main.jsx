@@ -28,9 +28,6 @@ import ParentProtectedRoute from './Pages/ProtectedRoutes/ParentProtectedRoute.j
 const Home = () => (
   <div className='min-h-screen w-screen overflow-x-hidden'>
     <LandingPage />
-    <About />
-    <Schedule />
-    <Contact />
   </div>
 )
 
@@ -43,7 +40,7 @@ const App = () => (
 
     <Route path="/admin" element={
 
-        <AdminPage />
+      <AdminPage />
 
     } />
 

@@ -1,18 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Rubik:ital,wght@0,300..900;1,300..900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Outfit:wght@100..900&display=swap');
 
 @import "tailwindcss";
+
+@theme {
+  --color-arch-bg: #F3EFE7;
+  --color-arch-dark: #222222;
+  --color-arch-accent: #7A7265;
+  --color-arch-gray: #E8E4DB;
+
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Outfit", sans-serif;
+}
 
 ::-webkit-scrollbar {
   display: none;
 }
 
+body {
+  background-color: var(--color-arch-bg);
+  color: var(--color-arch-dark);
+}
+
 .Normal {
-  font-family: "Rubik", sans-serif;
+  font-family: "Aref Ruqaa", serif;
   font-optical-sizing: auto;
   font-style: normal;
 }
 
 .Styled {
-  font-family: "Aref Ruqaa", serif;
+  font-family: "Rubik", sans-serif;
   font-style: normal;
+}
+
+.Arabic-Serif {
+  font-family: "Aref Ruqaa", serif;
+}
+
+.Arabic-Sans {
+  font-family: "Rubik", sans-serif;
 }

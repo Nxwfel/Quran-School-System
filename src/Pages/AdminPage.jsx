@@ -12,7 +12,7 @@ const useApi = () => {
       try { t = JSON.parse(localStorage.getItem('user') || '{}').token || '' } catch { t = '' }
     }
     if (t && t.startsWith('"') && t.endsWith('"')) {
-      try { t = JSON.parse(t) } catch {}
+      try { t = JSON.parse(t) } catch { }
     }
     return t
   }
@@ -45,44 +45,47 @@ const useApi = () => {
   }
 
   return {
-    get:  (path, params)       => request('GET',  path, null, params),
-    post: (path, body, auth)   => request('POST', path, body, null, auth),
-    put:  (path, body, params) => request('PUT',  path, body, params),
+    get: (path, params) => request('GET', path, null, params),
+    post: (path, body, auth) => request('POST', path, body, null, auth),
+    put: (path, body, params) => request('PUT', path, body, params),
   }
 }
 
 // ─── Design Tokens ────────────────────────────────────────────────────────
 const G = {
-  gold: '#d4a34f',
-  goldLight: '#f0deb0',
-  goldDim: 'rgba(212,163,79,0.5)',
-  goldFaint: 'rgba(212,163,79,0.12)',
-  goldBorder: 'rgba(212,163,79,0.2)',
-  goldBorderHover: 'rgba(212,163,79,0.45)',
-  bg: '#13100a',
-  bgCard: 'rgba(212,163,79,0.06)',
-  bgCardHover: 'rgba(212,163,79,0.1)',
-  red: '#e57373',
-  green: '#81c784',
-  amber: '#ffb74d',
+  // Arch Vision palette
+  bg: 'var(--color-arch-bg)',
+  dark: 'var(--color-arch-dark)',
+  accent: 'var(--color-arch-accent)',
+  gray: 'var(--color-arch-gray)',
+  // keep semantic aliases used throughout
+  gold: 'var(--color-arch-accent)',
+  goldLight: 'var(--color-arch-dark)',
+  goldDim: 'var(--color-arch-accent)',
+  goldFaint: 'rgba(34,34,34,0.05)',
+  goldBorder: 'rgba(0,0,0,0.08)',
+  goldBorderHover: 'rgba(0,0,0,0.25)',
+  bgCard: 'white',
+  bgCardHover: 'rgba(34,34,34,0.03)',
+  red: '#f87171',
+  green: 'var(--color-arch-accent)',
+  amber: 'var(--color-arch-dark)',
 }
-
-const ornamentSvg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%23d4a34f' stroke-width='0.4' opacity='0.3'%3E%3Cpolygon points='30,2 58,15 58,45 30,58 2,45 2,15'/%3E%3Cpolygon points='30,10 50,20 50,40 30,50 10,40 10,20'/%3E%3C/g%3E%3C/svg%3E")`
 
 // ─── Reusable UI ──────────────────────────────────────────────────────────
 
 const Divider = ({ label }) => (
   <div className='flex items-center gap-3 my-1'>
-    <div className='flex-1 h-px' style={{ background: `linear-gradient(to left, ${G.goldBorder}, transparent)` }} />
-    {label && <span className='Normal text-xs' style={{ color: G.goldDim }}>{label}</span>}
-    <div className='flex-1 h-px' style={{ background: `linear-gradient(to right, ${G.goldBorder}, transparent)` }} />
+    <div className='flex-1 h-px' style={{ background: 'rgba(0,0,0,0.07)' }} />
+    {label && <span className='Arabic-Sans text-xs' style={{ color: G.goldDim }}>{label}</span>}
+    <div className='flex-1 h-px' style={{ background: 'rgba(0,0,0,0.07)' }} />
   </div>
 )
 
 const Card = ({ children, className = '', hover = false }) => (
   <motion.div
     whileHover={hover ? { borderColor: G.goldBorderHover } : {}}
-    className={`rounded-2xl p-6 ${className}`}
+    className={`p-6 ${className}`}
     style={{ background: G.bgCard, border: `1px solid ${G.goldBorder}`, transition: 'border-color 0.2s' }}
   >
     {children}
@@ -92,16 +95,16 @@ const Card = ({ children, className = '', hover = false }) => (
 const SectionTitle = ({ icon, children }) => (
   <div className='flex items-center gap-3 mb-5'>
     <span className='text-xl'>{icon}</span>
-    <h3 className='Styled text-xl' style={{ color: G.goldLight }}>{children}</h3>
-    <div className='flex-1 h-px' style={{ background: `linear-gradient(to left, transparent, ${G.goldBorder})` }} />
+    <h3 className='Styled text-2xl' style={{ color: G.goldLight }}>{children}</h3>
+    <div className='flex-1 h-px' style={{ background: 'rgba(0,0,0,0.07)' }} />
   </div>
 )
 
 const Input = ({ label, value, onChange, type = 'text', placeholder = '', required = false }) => (
   <div className='flex flex-col gap-1.5'>
     {label && (
-      <label className='Normal text-xs text-right' style={{ color: G.goldDim }}>
-        {label}{required && <span style={{ color: G.gold }}> *</span>}
+      <label className='Arabic-Sans text-xs text-right' style={{ color: G.goldDim }}>
+        {label}{required && <span style={{ color: G.dark }}> *</span>}
       </label>
     )}
     <input
@@ -110,10 +113,10 @@ const Input = ({ label, value, onChange, type = 'text', placeholder = '', requir
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       required={required}
-      className='w-full rounded-xl px-4 py-2.5 text-right Normal outline-none transition-all duration-200 text-sm'
-      style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid ${G.goldBorder}`, color: G.goldLight }}
-      onFocus={e => { e.target.style.borderColor = G.goldBorderHover; e.target.style.background = 'rgba(212,163,79,0.05)' }}
-      onBlur={e => { e.target.style.borderColor = G.goldBorder; e.target.style.background = 'rgba(0,0,0,0.3)' }}
+      className='w-full px-4 py-2.5 text-right Arabic-Sans outline-none transition-all duration-200 text-sm'
+      style={{ background: 'white', border: `1px solid ${G.goldBorder}`, color: G.goldLight }}
+      onFocus={e => { e.target.style.borderColor = G.dark }}
+      onBlur={e => { e.target.style.borderColor = G.goldBorder }}
     />
   </div>
 )
@@ -121,22 +124,22 @@ const Input = ({ label, value, onChange, type = 'text', placeholder = '', requir
 const SelectInput = ({ label, value, onChange, options, placeholder = 'اختر...', required = false }) => (
   <div className='flex flex-col gap-1.5'>
     {label && (
-      <label className='Normal text-xs text-right' style={{ color: G.goldDim }}>
-        {label}{required && <span style={{ color: G.gold }}> *</span>}
+      <label className='Arabic-Sans text-xs text-right' style={{ color: G.goldDim }}>
+        {label}{required && <span style={{ color: G.dark }}> *</span>}
       </label>
     )}
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
       required={required}
-      className='w-full rounded-xl px-4 py-2.5 text-right Normal outline-none text-sm appearance-none cursor-pointer'
-      style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid ${G.goldBorder}`, color: value ? G.goldLight : G.goldDim }}
-      onFocus={e => e.target.style.borderColor = G.goldBorderHover}
+      className='w-full px-4 py-2.5 text-right Arabic-Sans outline-none text-sm appearance-none cursor-pointer'
+      style={{ background: 'white', border: `1px solid ${G.goldBorder}`, color: value ? G.goldLight : G.goldDim }}
+      onFocus={e => e.target.style.borderColor = G.dark}
       onBlur={e => e.target.style.borderColor = G.goldBorder}
     >
-      <option value='' style={{ background: '#1a1208', color: G.goldDim }}>{placeholder}</option>
+      <option value='' style={{ background: 'white', color: G.goldDim }}>{placeholder}</option>
       {options.map(o => (
-        <option key={o.value} value={o.value} style={{ background: '#1a1208', color: G.goldLight }}>{o.label}</option>
+        <option key={o.value} value={o.value} style={{ background: 'white', color: G.goldLight }}>{o.label}</option>
       ))}
     </select>
   </div>
@@ -144,20 +147,20 @@ const SelectInput = ({ label, value, onChange, options, placeholder = 'اختر.
 
 const Btn = ({ onClick, children, variant = 'primary', disabled = false, size = 'md', type = 'button' }) => {
   const variants = {
-    primary: { bg: `linear-gradient(135deg, rgba(212,163,79,0.3), rgba(212,163,79,0.12))`, border: `1px solid rgba(212,163,79,0.45)`, color: G.goldLight },
-    danger:  { bg: `linear-gradient(135deg, rgba(229,115,115,0.2), rgba(229,115,115,0.08))`, border: `1px solid rgba(229,115,115,0.3)`, color: '#ef9a9a' },
-    ghost:   { bg: 'transparent', border: `1px solid ${G.goldBorder}`, color: G.goldDim },
-    success: { bg: `linear-gradient(135deg, rgba(129,199,132,0.2), rgba(129,199,132,0.07))`, border: `1px solid rgba(129,199,132,0.3)`, color: '#a5d6a7' },
+    primary: { bg: 'var(--color-arch-dark)', border: '1px solid var(--color-arch-dark)', color: 'var(--color-arch-bg)' },
+    danger: { bg: 'transparent', border: '1px solid rgba(248,113,113,0.4)', color: '#f87171' },
+    ghost: { bg: 'transparent', border: `1px solid ${G.goldBorder}`, color: G.goldDim },
+    success: { bg: 'transparent', border: '1px solid var(--color-arch-accent)', color: 'var(--color-arch-accent)' },
   }
   const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-7 py-3.5 text-base' }
   const s = variants[variant]
   return (
     <motion.button
       type={type}
-      whileHover={!disabled ? { scale: 1.03, opacity: 0.92 } : {}}
+      whileHover={!disabled ? { opacity: 0.85 } : {}}
       whileTap={!disabled ? { scale: 0.97 } : {}}
       onClick={disabled ? undefined : onClick}
-      className={`rounded-xl Styled ${sizes[size]} flex items-center justify-center gap-2 transition-opacity`}
+      className={`Arabic-Sans ${sizes[size]} flex items-center justify-center gap-2 transition-opacity`}
       style={{ background: s.bg, border: s.border, color: s.color, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1 }}
     >
       {children}
@@ -167,14 +170,14 @@ const Btn = ({ onClick, children, variant = 'primary', disabled = false, size = 
 
 const Badge = ({ children, color = 'gold' }) => {
   const colors = {
-    gold:  { bg: 'rgba(212,163,79,0.15)',  border: 'rgba(212,163,79,0.3)',  text: G.goldLight },
-    green: { bg: 'rgba(129,199,132,0.15)', border: 'rgba(129,199,132,0.3)', text: '#a5d6a7' },
-    red:   { bg: 'rgba(229,115,115,0.15)', border: 'rgba(229,115,115,0.3)', text: '#ef9a9a' },
-    amber: { bg: 'rgba(255,183,77,0.15)',  border: 'rgba(255,183,77,0.3)',  text: '#ffd54f' },
+    gold: { bg: 'var(--color-arch-gray)', border: 'rgba(0,0,0,0.07)', text: 'var(--color-arch-dark)' },
+    green: { bg: 'rgba(122,114,101,0.08)', border: 'rgba(122,114,101,0.2)', text: 'var(--color-arch-accent)' },
+    red: { bg: 'rgba(248,113,113,0.08)', border: 'rgba(248,113,113,0.2)', text: '#f87171' },
+    amber: { bg: 'rgba(34,34,34,0.05)', border: 'rgba(34,34,34,0.12)', text: 'var(--color-arch-dark)' },
   }
   const c = colors[color]
   return (
-    <span className='px-2.5 py-0.5 rounded-full Normal text-xs' style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text }}>
+    <span className='px-2.5 py-0.5 Arabic-Sans text-xs' style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text }}>
       {children}
     </span>
   )
@@ -185,12 +188,12 @@ const Toast = ({ message, type }) => (
     initial={{ opacity: 0, y: 20, scale: 0.95 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
     exit={{ opacity: 0, y: 20, scale: 0.95 }}
-    className='fixed bottom-6 left-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl Normal text-sm shadow-2xl'
+    className='fixed bottom-6 left-6 z-50 flex items-center gap-3 px-5 py-3.5 Arabic-Sans text-sm'
     style={{
-      background: type === 'error' ? 'rgba(30,10,10,0.95)' : 'rgba(10,18,10,0.95)',
-      border: `1px solid ${type === 'error' ? 'rgba(229,115,115,0.35)' : 'rgba(129,199,132,0.35)'}`,
-      color: type === 'error' ? '#ef9a9a' : '#a5d6a7',
-      backdropFilter: 'blur(20px)',
+      background: 'white',
+      border: `1px solid ${type === 'error' ? 'rgba(248,113,113,0.35)' : 'var(--color-arch-accent)'}`,
+      color: type === 'error' ? '#f87171' : 'var(--color-arch-dark)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
     }}
   >
     <span className='text-lg'>{type === 'error' ? '✕' : '✓'}</span>
@@ -200,12 +203,12 @@ const Toast = ({ message, type }) => (
 
 // Table components
 const Th = ({ children }) => (
-  <th className='py-3 px-4 Normal text-xs font-normal text-right whitespace-nowrap' style={{ color: G.goldDim, borderBottom: `1px solid ${G.goldBorder}` }}>
+  <th className='py-3 px-4 Arabic-Sans text-xs font-normal text-right whitespace-nowrap' style={{ color: G.goldDim, borderBottom: `1px solid ${G.goldBorder}` }}>
     {children}
   </th>
 )
 const Td = ({ children, highlight }) => (
-  <td className='py-3.5 px-4 Normal text-sm text-right' style={{ color: highlight || G.goldLight, borderBottom: `1px solid rgba(212,163,79,0.06)` }}>
+  <td className='py-3.5 px-4 Arabic-Sans text-sm text-right' style={{ color: highlight || G.goldLight, borderBottom: `1px solid rgba(0,0,0,0.04)` }}>
     {children}
   </td>
 )
@@ -216,7 +219,7 @@ const Tr = ({ children, i }) => (
     transition={{ delay: i * 0.04 }}
     className='transition-colors'
     style={{ cursor: 'default' }}
-    onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,163,79,0.04)'}
+    onMouseEnter={e => e.currentTarget.style.background = 'var(--color-arch-gray)'}
     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
   >
     {children}
@@ -225,8 +228,8 @@ const Tr = ({ children, i }) => (
 
 const EmptyState = ({ label }) => (
   <div className='py-12 flex flex-col items-center gap-3'>
-    <div className='text-3xl opacity-30'>✦</div>
-    <p className='Normal text-sm' style={{ color: 'rgba(212,163,79,0.3)' }}>{label}</p>
+    <div className='text-3xl opacity-20' style={{ color: 'var(--color-arch-dark)' }}>⌀</div>
+    <p className='Arabic-Sans text-sm' style={{ color: 'var(--color-arch-accent)', opacity: 0.7 }}>{label}</p>
   </div>
 )
 
@@ -234,8 +237,8 @@ const Spinner = () => (
   <motion.div
     animate={{ rotate: 360 }}
     transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
-    className='w-4 h-4 rounded-full border-2 border-transparent'
-    style={{ borderTopColor: G.gold }}
+    className='w-4 h-4 rounded-full border-2'
+    style={{ borderColor: 'var(--color-arch-gray)', borderTopColor: 'var(--color-arch-accent)' }}
   />
 )
 
@@ -687,7 +690,7 @@ const AttendanceSection = ({ api, toast }) => {
   const [fetchingHistory, setFetchingHistory] = useState(false)
 
   useEffect(() => {
-    api.get('/students/').then(s => setStudents(s)).catch(() => {})
+    api.get('/students/').then(s => setStudents(s)).catch(() => { })
   }, [])
 
   const fetchHistory = async (id) => {
@@ -784,7 +787,7 @@ const ProgressSection = ({ api, toast }) => {
   const [fetchingHistory, setFetchingHistory] = useState(false)
 
   useEffect(() => {
-    api.get('/students/').then(s => setStudents(s)).catch(() => {})
+    api.get('/students/').then(s => setStudents(s)).catch(() => { })
   }, [])
 
   const fetchHistory = async (id) => {
@@ -939,14 +942,14 @@ const SettingsSection = ({ api, toast }) => {
 
 // ─── Navigation Config ─────────────────────────────────────────────────────
 const SECTIONS = [
-  { id: 'dashboard',   label: 'نظرة عامة',  icon: '◈' },
-  { id: 'teachers',    label: 'الأساتذة',   icon: '👨‍🏫' },
-  { id: 'supervisors', label: 'المشرفون',   icon: '🧑‍💼' },
-  { id: 'students',    label: 'الطلاب',     icon: '🎓' },
-  { id: 'books',       label: 'الكتب',      icon: '📚' },
-  { id: 'attendance',  label: 'الحضور',     icon: '📅' },
-  { id: 'progress',    label: 'التقدم',     icon: '📈' },
-  { id: 'settings',    label: 'الإعدادات',  icon: '⚙️' },
+  { id: 'dashboard', label: 'نظرة عامة', icon: '◈' },
+  { id: 'teachers', label: 'الأساتذة', icon: '👨‍🏫' },
+  { id: 'supervisors', label: 'المشرفون', icon: '🧑‍💼' },
+  { id: 'students', label: 'الطلاب', icon: '🎓' },
+  { id: 'books', label: 'الكتب', icon: '📚' },
+  { id: 'attendance', label: 'الحضور', icon: '📅' },
+  { id: 'progress', label: 'التقدم', icon: '📈' },
+  { id: 'settings', label: 'الإعدادات', icon: '⚙️' },
 ]
 
 // ─── Main Component ────────────────────────────────────────────────────────
@@ -971,14 +974,14 @@ const AdminPage = () => {
   const renderSection = () => {
     const props = { api, toast: showToast }
     const map = {
-      dashboard:   <DashboardSection {...props} />,
-      teachers:    <TeachersSection {...props} />,
+      dashboard: <DashboardSection {...props} />,
+      teachers: <TeachersSection {...props} />,
       supervisors: <SupervisorsSection {...props} />,
-      students:    <StudentsSection {...props} />,
-      books:       <BooksSection {...props} />,
-      attendance:  <AttendanceSection {...props} />,
-      progress:    <ProgressSection {...props} />,
-      settings:    <SettingsSection {...props} />,
+      students: <StudentsSection {...props} />,
+      books: <BooksSection {...props} />,
+      attendance: <AttendanceSection {...props} />,
+      progress: <ProgressSection {...props} />,
+      settings: <SettingsSection {...props} />,
     }
     return map[active] || null
   }
@@ -988,12 +991,9 @@ const AdminPage = () => {
   return (
     <div
       className='min-h-screen w-screen flex overflow-hidden'
-      style={{ background: G.bg }}
+      style={{ background: 'var(--color-arch-bg)' }}
       dir='rtl'
     >
-      {/* Background texture */}
-      <div className='fixed inset-0 pointer-events-none opacity-[0.025]' style={{ backgroundImage: ornamentSvg, backgroundSize: '60px 60px' }} />
-      <div className='fixed inset-0 pointer-events-none' style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(212,163,79,0.06), transparent)' }} />
 
       {/* ── Sidebar ── */}
       <motion.aside
@@ -1001,20 +1001,12 @@ const AdminPage = () => {
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
         className='fixed right-0 top-0 h-screen w-60 z-30 hidden md:flex flex-col'
-        style={{ background: 'rgba(10,8,4,0.85)', borderLeft: `1px solid ${G.goldBorder}`, backdropFilter: 'blur(24px)' }}
+        style={{ background: 'var(--color-arch-bg)', borderLeft: '1px solid rgba(0,0,0,0.08)' }}
       >
         {/* Logo */}
-        <div className='px-6 pt-8 pb-6 flex flex-col items-center gap-2' style={{ borderBottom: `1px solid ${G.goldBorder}` }}>
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            className='text-4xl mb-1'
-            style={{ color: G.gold, textShadow: `0 0 30px rgba(212,163,79,0.4)` }}
-          >
-            ✦
-          </motion.div>
-          <h1 className='Styled text-lg text-center leading-tight' style={{ color: G.goldLight }}>مدرسة الجياد</h1>
-          <span className='Normal text-xs' style={{ color: G.goldDim }}>لوحة الإدارة</span>
+        <div className='px-6 pt-8 pb-6 flex flex-col items-center gap-2' style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <h1 className='Styled text-xl text-center leading-tight' style={{ color: 'var(--color-arch-dark)' }}>مدرسة موسى بن نصير</h1>
+          <span className='Arabic-Sans text-xs' style={{ color: 'var(--color-arch-accent)' }}>لوحة الإدارة</span>
         </div>
 
         {/* Nav */}
@@ -1028,20 +1020,13 @@ const AdminPage = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.06 }}
                 onClick={() => setActive(s.id)}
-                className='relative flex items-center gap-3 px-4 py-2.5 rounded-xl w-full text-right Normal text-sm transition-all duration-200'
+                className='relative flex items-center gap-3 px-4 py-2.5 w-full text-right Arabic-Sans text-sm transition-all duration-200'
                 style={{
-                  background: isActive ? G.goldFaint : 'transparent',
-                  border: `1px solid ${isActive ? G.goldBorder : 'transparent'}`,
-                  color: isActive ? G.goldLight : G.goldDim,
+                  background: isActive ? 'var(--color-arch-dark)' : 'transparent',
+                  border: '1px solid transparent',
+                  color: isActive ? 'var(--color-arch-bg)' : 'var(--color-arch-accent)',
                 }}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId='sidebar-indicator'
-                    className='absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-l-full'
-                    style={{ background: G.gold }}
-                  />
-                )}
                 <span className='text-base'>{s.icon}</span>
                 <span>{s.label}</span>
               </motion.button>
@@ -1050,15 +1035,15 @@ const AdminPage = () => {
         </nav>
 
         {/* Logout */}
-        <div className='p-4' style={{ borderTop: `1px solid ${G.goldBorder}` }}>
+        <div className='p-4' style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
             onClick={logout}
-            className='w-full flex items-center justify-center gap-2 py-2.5 rounded-xl Normal text-sm transition-colors'
-            style={{ background: 'transparent', border: `1px solid rgba(229,115,115,0.2)`, color: 'rgba(229,115,115,0.6)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(229,115,115,0.07)'; e.currentTarget.style.color = '#ef9a9a' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(229,115,115,0.6)' }}
+            className='w-full flex items-center justify-center gap-2 py-2.5 Arabic-Sans text-sm transition-colors'
+            style={{ background: 'transparent', border: '1px solid var(--color-arch-dark)', color: 'var(--color-arch-dark)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-arch-dark)'; e.currentTarget.style.color = 'var(--color-arch-bg)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-arch-dark)' }}
           >
             <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-4 h-4'>
               <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9' />
@@ -1071,15 +1056,15 @@ const AdminPage = () => {
       {/* ── Mobile Top Bar ── */}
       <div
         className='fixed top-0 right-0 left-0 z-20 flex md:hidden items-center justify-between px-4 py-3'
-        style={{ background: 'rgba(10,8,4,0.95)', borderBottom: `1px solid ${G.goldBorder}`, backdropFilter: 'blur(16px)' }}
+        style={{ background: 'var(--color-arch-bg)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
       >
-        <button onClick={logout} style={{ color: 'rgba(229,115,115,0.6)' }}>
+        <button onClick={logout} style={{ color: 'var(--color-arch-accent)' }}>
           <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-5 h-5'>
             <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9' />
           </svg>
         </button>
-        <h1 className='Styled text-lg' style={{ color: G.goldLight }}>مدرسة الجياد</h1>
-        <button onClick={() => setMobileOpen(!mobileOpen)} style={{ color: G.goldDim }}>
+        <h1 className='Styled text-lg' style={{ color: 'var(--color-arch-dark)' }}>مدرسة موسى بن نصير</h1>
+        <button onClick={() => setMobileOpen(!mobileOpen)} style={{ color: 'var(--color-arch-accent)' }}>
           <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={2} stroke='currentColor' className='w-5 h-5'>
             <path strokeLinecap='round' strokeLinejoin='round' d='M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5' />
           </svg>
@@ -1092,23 +1077,23 @@ const AdminPage = () => {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className='fixed inset-0 z-40 md:hidden'
-            style={{ background: 'rgba(10,8,4,0.97)', backdropFilter: 'blur(20px)' }}
+            style={{ background: 'var(--color-arch-bg)' }}
           >
             <button
               onClick={() => setMobileOpen(false)}
-              className='absolute top-5 left-5 Normal text-lg'
-              style={{ color: G.goldDim }}
+              className='absolute top-5 left-5 Arabic-Sans text-lg'
+              style={{ color: 'var(--color-arch-accent)' }}
             >✕</button>
             <div className='flex flex-col items-center justify-center h-full gap-3'>
               {SECTIONS.map(s => (
                 <button
                   key={s.id}
                   onClick={() => { setActive(s.id); setMobileOpen(false) }}
-                  className='flex items-center gap-3 px-8 py-3 rounded-xl Normal text-lg w-56 justify-center'
+                  className='flex items-center gap-3 px-8 py-3 Arabic-Sans text-lg w-56 justify-center'
                   style={{
-                    color: active === s.id ? G.goldLight : G.goldDim,
-                    background: active === s.id ? G.goldFaint : 'transparent',
-                    border: `1px solid ${active === s.id ? G.goldBorder : 'transparent'}`,
+                    color: active === s.id ? 'var(--color-arch-bg)' : 'var(--color-arch-dark)',
+                    background: active === s.id ? 'var(--color-arch-dark)' : 'transparent',
+                    border: `1px solid ${active === s.id ? 'var(--color-arch-dark)' : 'rgba(0,0,0,0.08)'}`,
                   }}
                 >
                   <span>{s.icon}</span><span>{s.label}</span>
@@ -1124,17 +1109,14 @@ const AdminPage = () => {
         {/* Page header */}
         <div
           className='sticky top-0 z-10 px-6 md:px-10 py-4 flex items-center justify-between'
-          style={{ background: 'rgba(10,8,4,0.8)', backdropFilter: 'blur(20px)', borderBottom: `1px solid ${G.goldBorder}` }}
+          style={{ background: 'var(--color-arch-bg)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
         >
           <div className='flex items-center gap-3'>
             <span className='text-xl'>{current?.icon}</span>
             <div>
-              <h2 className='Styled text-2xl' style={{ color: G.goldLight }}>{current?.label}</h2>
-              <div className='h-0.5 mt-1 rounded-full w-16' style={{ background: `linear-gradient(to left, transparent, ${G.gold})` }} />
+              <h2 className='Styled text-2xl' style={{ color: 'var(--color-arch-dark)' }}>{current?.label}</h2>
+              <div className='h-px mt-1 w-16' style={{ background: 'var(--color-arch-accent)' }} />
             </div>
-          </div>
-          <div className='flex items-center gap-2' style={{ color: 'rgba(212,163,79,0.15)' }}>
-            <span className='Styled text-3xl'>✦</span>
           </div>
         </div>
 
